@@ -46,6 +46,18 @@ class Tagger extends React.Component {
     this._layer.draw()
   }
 
+  repeatBoundingBox = tag => {
+    const id = `tag${tagId}`
+    tagId += 1
+    const boundingBox = createBoundingBox({ x: 100, y: 100, width: tag.box.width(),
+      height: tag.box.height(), text: tag.text, id, color: tag.color })
+    this._layer.add(boundingBox)
+    this._layer.draw()
+    this.setState(prevState => ({
+      ...prevState,
+      tags: [...prevState.tags, { text: tag.text, box: boundingBox, id, color: boundingBox.color }]
+    }))
+  }
 
   addBoundingBoxes = () => {
     const newTags = []
@@ -139,6 +151,7 @@ class Tagger extends React.Component {
                   onChange={e => this.renameBoundingBox(e)}
                 />
               }
+              <button onClick={() => this.repeatBoundingBox(tag)}> Repeat Bounding Box</button>
               <button onClick={() => this.removeBoundingBox(tag)}> Remove Bounding Box</button>
             </li>
           ))}
