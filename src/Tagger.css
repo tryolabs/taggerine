@@ -1,0 +1,6 @@
+:global .konvajs-content {
+  border-color: black;
+  border-width: 3px;
+  border-style: solid;
+  margin: auto;
+}
