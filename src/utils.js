@@ -61,7 +61,7 @@ const ANCHOR_NAMES = {
   bottomRight: 'bottom-right-anchor'
 }
 
-const updateBoundingBox = activeAnchor => {
+const updateBoundingBox = (activeAnchor, updateFunctions) => {
   const group = activeAnchor.getParent()
 
   const topLeft = group.get(`.${ANCHOR_NAMES.topLeft}`)[0]
@@ -114,6 +114,9 @@ const updateBoundingBox = activeAnchor => {
     group.width(width)
     group.height(height)
   }
+  updateFunctions.forEach(f => {
+    f({x, y, width, height})
+  })
 }
 
 const BOUNDING_BOX_DEFAULTS = {
@@ -134,8 +137,9 @@ const createBoundingBox = ({
   text,
   id,
   color = colors(id)
-}) => {
-  const group = new Konva.Group({ x, y, draggable: true, id, width, height })
+},
+updateFunctions) => {
+  const group = new Konva.Group({ x, y, draggable: true, id, width, height})
 
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 
@@ -154,7 +158,7 @@ const createBoundingBox = ({
 
     anchor.on('dragmove', function() {
       const layer = this.getLayer()
-      updateBoundingBox(this)
+      updateBoundingBox(this, updateFunctions)
       layer.draw()
     })
     anchor.on('mousedown touchstart', function() {

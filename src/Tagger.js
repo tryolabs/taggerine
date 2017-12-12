@@ -17,7 +17,7 @@ class Tagger extends React.Component {
     const id = `tag${tagId}`
     tagId += 1
 
-    const boundingBox = createBoundingBox({ x: 100, y: 100, text: id, id })
+    const boundingBox = createBoundingBox({ x: 100, y: 100, text: id, id }, [this.rearrengeBoundingBoxes])
     this._layer.add(boundingBox)
 
     this._layer.draw()
@@ -25,13 +25,13 @@ class Tagger extends React.Component {
     this.setState(prevState => ({
       ...prevState,
       tags: [...prevState.tags, { text: id, box: boundingBox, id, color: boundingBox.color }]
-    }))
+    }), this.rearrengeBoundingBoxes)
   }
 
   removeBoundingBox = tag => {
     const newTags = this.state.tags.filter(obj => tag.id !== obj.id)
     tag.box.remove()
-    this.setState({ tags: newTags })
+    this.setState({ tags: newTags }, this.rearrengeBoundingBoxes)
     this._layer.draw()
   }
 
@@ -50,13 +50,13 @@ class Tagger extends React.Component {
     const id = `tag${tagId}`
     tagId += 1
     const boundingBox = createBoundingBox({ x: 100, y: 100, width: tag.box.width(),
-      height: tag.box.height(), text: tag.text, id, color: tag.color })
+      height: tag.box.height(), text: tag.text, id, color: tag.color }, [this.rearrengeBoundingBoxes])
     this._layer.add(boundingBox)
     this._layer.draw()
     this.setState(prevState => ({
       ...prevState,
       tags: [...prevState.tags, { text: tag.text, box: boundingBox, id, color: boundingBox.color }]
-    }))
+    }), this.rearrengeBoundingBoxes)
   }
 
   addBoundingBoxes = () => {
@@ -64,12 +64,24 @@ class Tagger extends React.Component {
     this.props.tags.forEach(({ x, y, width, height, name }) => {
       const id = `tag${tagId}`
       tagId += 1
-      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id })
+      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id },
+        [this.rearrengeBoundingBoxes])
       this._layer.add(boundingBox)
       newTags.push({ text: name, box: boundingBox, id, color: boundingBox.color })
     })
     this.setState({tags: newTags})
+    this.rearrengeBoundingBoxes()
     this._layer.draw()
+  }
+
+  rearrengeBoundingBoxes = () => {
+    const tags = this.state.tags
+    tags.sort((a, b) => {
+      return (b.box.height()*b.box.width()) - (a.box.height()*a.box.width())
+    })
+    tags.forEach((tag, index) => {
+      tag.box.setZIndex(index + 1)
+    })
   }
 
   addImage() {
@@ -98,6 +110,7 @@ class Tagger extends React.Component {
         })
       // add the shape to the layer
       this._layer.add(this._image)
+      this._image.setZIndex(0)
       this._layer.draw()
       this.addBoundingBoxes()
     }
