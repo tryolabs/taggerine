@@ -1,4 +1,5 @@
 import Konva from 'konva'
+import { scaleOrdinal, schemeCategory10 } from 'd3-scale'
 
 const ANCHOR_DEFAULTS = {
   stroke: '#666',
@@ -96,7 +97,13 @@ const updateBoundingBox = activeAnchor => {
   }
 
   const { x, y } = topLeft.position()
-  rect.position({ x, y })
+/*  const groupPosition = group.position()
+  console.log(`group position ${groupPosition.x} ${groupPosition.y}`)
+  group.position({x: groupPosition.x + x, y: groupPosition.y})
+  console.log(`group position 2 ${groupPosition.x} ${groupPosition.y}`)
+  console.log(`topLeft position ${x} ${y}`)
+*/
+  rect.position({ x, y})
   label.position({ x: x + LABEL_DEFAULTS.xOffset, y: y + LABEL_DEFAULTS.yOffset })
 
   const width = topRight.getX() - topLeft.getX()
@@ -117,15 +124,18 @@ const BOUNDING_BOX_DEFAULTS = {
   opacity: 0.3
 }
 
+const colors = scaleOrdinal(schemeCategory10)
+
 const createBoundingBox = ({
   x,
   y,
   width = BOUNDING_BOX_DEFAULTS.width,
   height = BOUNDING_BOX_DEFAULTS.height,
-  tag: name,
-  color
+  text,
+  id,
+  color = colors(id)
 }) => {
-  const group = new Konva.Group({ x, y, draggable: true, name })
+  const group = new Konva.Group({ x, y, draggable: true, id, width, height })
 
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 
@@ -157,9 +167,10 @@ const createBoundingBox = ({
       layer.draw()
     })
   })
-
-  group.add(createLabel({ text: name, color }))
-
+  const label = createLabel({ text: text, color })
+  group.add(label)
+  group.label = label
+  group.color = color
   return group
 }
 

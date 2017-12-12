@@ -1,6 +1,5 @@
 import React from 'react'
 import Konva from 'konva'
-import { scaleOrdinal, schemeCategory10 } from 'd3-scale'
 
 import { createBoundingBox, createLabel } from './utils'
 
@@ -8,7 +7,6 @@ const MAX_HEIGHT = 800
 const MAX_WIDTH = 700
 
 let tagId = 0
-const colors = scaleOrdinal(schemeCategory10)
 
 class Tagger extends React.Component {
   state = {
@@ -16,37 +14,49 @@ class Tagger extends React.Component {
   }
 
   addBoundingBox = e => {
-    const tag = `tag${tagId}`
+    const id = `tag${tagId}`
     tagId += 1
-    const color = colors(tagId)
 
-    const boundingBox = createBoundingBox({ x: 100, y: 100, tag, color })
+    const boundingBox = createBoundingBox({ x: 100, y: 100, text: id, id })
     this._layer.add(boundingBox)
 
     this._layer.draw()
 
     this.setState(prevState => ({
       ...prevState,
-      tags: [...prevState.tags, { name: tag, box: boundingBox, tag, color }]
+      tags: [...prevState.tags, { text: id, box: boundingBox, id, color: boundingBox.color }]
     }))
   }
 
   removeBoundingBox = tag => {
-    const shapes = this._layer.find(`.${tag}`)
-    const newTags = this.state.tags.filter(obj => tag !== obj.name)
-    for (let shape of shapes) {
-      shape.remove()
-    }
+    const newTags = this.state.tags.filter(obj => tag.id !== obj.id)
+    tag.box.remove()
     this.setState({ tags: newTags })
     this._layer.draw()
   }
 
   renameBoundingBox = e => {
-    const tag = this.state.tags.filter(obj => e.target.id === obj.name)[0]
-    tag.tag = e.target.value
+    const tag = this.state.tags.filter(obj => e.target.id === obj.id)[0]
+    tag.text = e.target.value
     const boundingBox = tag.box
-    boundingBox.get('Label')[0].remove()
-    boundingBox.add(createLabel({ text: e.target.value, color: tag.color }))
+    boundingBox.label.remove()
+    const label = createLabel({ text: tag.text, color: tag.color })
+    boundingBox.add(label)
+    boundingBox.label = label
+    this._layer.draw()
+  }
+
+
+  addBoundingBoxes = () => {
+    const newTags = []
+    this.props.tags.forEach(({ x, y, width, height, name }) => {
+      const id = `tag${tagId}`
+      tagId += 1
+      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id })
+      this._layer.add(boundingBox)
+      newTags.push({ text: name, box: boundingBox, id, color: boundingBox.color })
+    })
+    this.setState({tags: newTags})
     this._layer.draw()
   }
 
@@ -66,9 +76,7 @@ class Tagger extends React.Component {
 
       this._stage.height(newHeight)
       this._stage.width(newWidth)
-      // add the shape to the layer
-      this._layer.add(
-        new Konva.Image({
+      this._image = new Konva.Image({
           x: 0,
           y: 0,
           image: img,
@@ -76,8 +84,10 @@ class Tagger extends React.Component {
           height: newHeight,
           name: 'currentImage'
         })
-      )
+      // add the shape to the layer
+      this._layer.add(this._image)
       this._layer.draw()
+      this.addBoundingBoxes()
     }
     img.src = this.props.image
   }
@@ -88,11 +98,6 @@ class Tagger extends React.Component {
       width: MAX_WIDTH,
       height: MAX_HEIGHT
     })
-    const container = this._stage.getContent()
-    container.style.borderColor = 'black'
-    container.style.borderWidth = '3px'
-    container.style.borderStyle = 'solid'
-    container.style.margin = 'auto'
 
     this._layer = new Konva.Layer()
     this._stage.add(this._layer)
@@ -102,13 +107,13 @@ class Tagger extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.image !== this.props.image) {
-      const images = this._layer.find('.currentImage')
-      for (let image of images) {
-        image.remove()
+      this._image.remove()
+      for (let tag of this.state.tags) {
+        tag.box.remove()
       }
-      this.addImage()
       this.props.updateTags(this.state.tags)
       this.setState({ tags: [] })
+      this.addImage()
     }
   }
 
@@ -125,16 +130,16 @@ class Tagger extends React.Component {
         <hr />
         <ul>
           {this.state.tags.map(tag => (
-            <li key={tag.name}>
+            <li key={tag.id}>
               {
                 <input
                   type="text"
-                  id={tag.name}
-                  defaultValue={tag.tag}
+                  id={tag.id}
+                  defaultValue={tag.text}
                   onChange={e => this.renameBoundingBox(e)}
                 />
               }
-              <button onClick={() => this.removeBoundingBox(tag.name)}> Remove Bounding Box</button>
+              <button onClick={() => this.removeBoundingBox(tag)}> Remove Bounding Box</button>
             </li>
           ))}
         </ul>

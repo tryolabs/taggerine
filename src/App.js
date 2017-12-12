@@ -45,27 +45,31 @@ class App extends Component {
 
   uploadImages = images => {
     this.setState(previousState => {
-      const imagesMetadata = images.map(file => ({
+      let imagesMetadata = images.map(file => ({
         name: file.name,
         extension: file.extension,
         url: file.preview.url,
-        file
+        file,
+        tags: []
       }))
+
       const intersection = imagesMetadata.filter(
-        obj => previousState.taggedImages.map(i => i.name).indexOf(obj.name) === -1
+        obj => (previousState.taggedImages.map(i => i.name).indexOf(obj.name) === -1 &&
+          previousState.unprocessedImages.map(i => i.name).indexOf(obj.name) === -1 &&
+          (!previousState.currentImage || previousState.currentImage.name !== obj.name))
       )
       return {
         currentImage: previousState.currentImage
           ? previousState.currentImage
           : intersection.shift(),
-        unprocessedImages: intersection
+        unprocessedImages: previousState.unprocessedImages.concat(intersection)
       }
     })
   }
 
   updateCurrentTags = tags => {
     const currentTags = tags.map(tag => ({
-      name: tag.tagName,
+      name: tag.text,
       x: tag.box.x(),
       y: tag.box.y(),
       width: tag.box.width(),
@@ -97,7 +101,7 @@ class App extends Component {
             Next
           </button>
           {this.state.currentImage && (
-            <Tagger image={this.state.currentImage.url} updateTags={this.updateCurrentTags} />
+            <Tagger image={this.state.currentImage.url} tags={this.state.currentImage.tags} updateTags={this.updateCurrentTags} />
           )}
         </div>
       </div>
