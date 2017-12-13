@@ -9,38 +9,37 @@ const MAX_WIDTH = 700
 let tagId = 0
 
 class Tagger extends React.Component {
-  state = {
-    tags: []
-  }
+  state = {}
 
   addBoundingBox = e => {
     const id = `tag${tagId}`
     tagId += 1
 
-    const boundingBox = createBoundingBox({ x: 100, y: 100, text: id, id }, [this.rearrengeBoundingBoxes])
+    const boundingBox = createBoundingBox({ x: 100, y: 100, text: id, id },
+      this.rearrengeBoundingBoxes, this.updateTag)
     this._layer.add(boundingBox)
 
     this._layer.draw()
 
-    this.setState(prevState => ({
-      ...prevState,
-      tags: [...prevState.tags, { text: id, box: boundingBox, id, color: boundingBox.color }]
-    }), this.rearrengeBoundingBoxes)
+    this.props.updateTag({name: id, id, x: boundingBox.x(), y: boundingBox.y(),
+      width: boundingBox.width(), height: boundingBox.height()})
+
+    this._boundingBoxes[id] = boundingBox
   }
 
   removeBoundingBox = tag => {
-    const newTags = this.state.tags.filter(obj => tag.id !== obj.id)
-    tag.box.remove()
-    this.setState({ tags: newTags }, this.rearrengeBoundingBoxes)
+    this._boundingBoxes[tag.id].remove()
+    this.props.removeTag(tag.id)
     this._layer.draw()
   }
 
   renameBoundingBox = e => {
-    const tag = this.state.tags.filter(obj => e.target.id === obj.id)[0]
-    tag.text = e.target.value
-    const boundingBox = tag.box
+    const currentTag = this.props.tags[e.target.id]
+    currentTag.name = e.target.value
+    this.props.updateTag(currentTag)
+    const boundingBox = this._boundingBoxes[e.target.id]
     boundingBox.label.remove()
-    const label = createLabel({ text: tag.text, color: tag.color })
+    const label = createLabel({ text: currentTag.name, color: boundingBox.color })
     boundingBox.add(label)
     boundingBox.label = label
     this._layer.draw()
@@ -49,38 +48,50 @@ class Tagger extends React.Component {
   repeatBoundingBox = tag => {
     const id = `tag${tagId}`
     tagId += 1
-    const boundingBox = createBoundingBox({ x: 100, y: 100, width: tag.box.width(),
-      height: tag.box.height(), text: tag.text, id, color: tag.color }, [this.rearrengeBoundingBoxes])
+    const originalBoundingBox = this._boundingBoxes[tag.id]
+    const boundingBox = createBoundingBox(
+      {
+        x: 100,
+        y: 100,
+        width: tag.width,
+        height: tag.height,
+        text: tag.name,
+        id,
+        color: originalBoundingBox.color
+      },
+      this.rearrengeBoundingBoxes,
+      this.updateTag
+    )
     this._layer.add(boundingBox)
     this._layer.draw()
-    this.setState(prevState => ({
-      ...prevState,
-      tags: [...prevState.tags, { text: tag.text, box: boundingBox, id, color: boundingBox.color }]
-    }), this.rearrengeBoundingBoxes)
+
+    this.updateTag({name: id, id, x: boundingBox.x(), y: boundingBox.y(),
+      width: boundingBox.width(), height: boundingBox.height()})
   }
 
   addBoundingBoxes = () => {
-    const newTags = []
-    this.props.tags.forEach(({ x, y, width, height, name }) => {
+    Object.values(this.props.tags).forEach(({ x, y, width, height, name }) => {
       const id = `tag${tagId}`
       tagId += 1
-      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id },
-        [this.rearrengeBoundingBoxes])
+      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id }, 
+        this.rearrengeBoundingBoxes, this.updateTag)
       this._layer.add(boundingBox)
-      newTags.push({ text: name, box: boundingBox, id, color: boundingBox.color })
+      this._boundingBoxes[id] = boundingBox
     })
-    this.setState({tags: newTags})
-    this.rearrengeBoundingBoxes()
     this._layer.draw()
   }
 
+  updateTag = (id, text, x, y, width, height) => {
+    this.props.updateTag({id, name: text, x, y, width, height})
+  }
+
   rearrengeBoundingBoxes = () => {
-    const tags = this.state.tags
+    const tags = Object.values(this._boundingBoxes)
     tags.sort((a, b) => {
-      return (b.box.height()*b.box.width()) - (a.box.height()*a.box.width())
+      return b.height() * b.width() - a.height() * a.width()
     })
-    tags.forEach((tag, index) => {
-      tag.box.setZIndex(index + 1)
+    tags.forEach((box, index) => {
+      box.setZIndex(index + 1)
     })
   }
 
@@ -101,13 +112,13 @@ class Tagger extends React.Component {
       this._stage.height(newHeight)
       this._stage.width(newWidth)
       this._image = new Konva.Image({
-          x: 0,
-          y: 0,
-          image: img,
-          width: newWidth,
-          height: newHeight,
-          name: 'currentImage'
-        })
+        x: 0,
+        y: 0,
+        image: img,
+        width: newWidth,
+        height: newHeight,
+        name: 'currentImage'
+      })
       // add the shape to the layer
       this._layer.add(this._image)
       this._image.setZIndex(0)
@@ -118,6 +129,7 @@ class Tagger extends React.Component {
   }
 
   componentDidMount() {
+    this._boundingBoxes = {}
     this._stage = new Konva.Stage({
       container: '#canvas-container',
       width: MAX_WIDTH,
@@ -133,17 +145,17 @@ class Tagger extends React.Component {
   componentDidUpdate(prevProps) {
     if (prevProps.image !== this.props.image) {
       this._image.remove()
-      for (let tag of this.state.tags) {
-        tag.box.remove()
+      for (let box of this._boundingBoxes) {
+        box.remove()
       }
-      this.props.updateTags(this.state.tags)
-      this.setState({ tags: [] })
+      this._boundingBoxes = {}
       this.addImage()
+    } else if (prevProps.tags !== this.props.tags) {
+      for (let box of this._boundingBoxes) {
+        box.remove()
+      }
+      this.addBoundingBoxes()
     }
-  }
-
-  componentWillUnmount() {
-    this.props.updateTags(this.state.tags)
   }
 
   render() {
@@ -154,13 +166,13 @@ class Tagger extends React.Component {
         <button onClick={this.addBoundingBox}>Add Bounding Box</button>
         <hr />
         <ul>
-          {this.state.tags.map(tag => (
+          {Object.values(this.props.tags).map(tag => (
             <li key={tag.id}>
               {
                 <input
                   type="text"
                   id={tag.id}
-                  defaultValue={tag.text}
+                  defaultValue={tag.name}
                   onChange={e => this.renameBoundingBox(e)}
                 />
               }

@@ -50,7 +50,7 @@ class App extends Component {
         extension: file.extension,
         url: file.preview.url,
         file,
-        tags: []
+        tags: {}
       }))
 
       const intersection = imagesMetadata.filter(
@@ -67,23 +67,16 @@ class App extends Component {
     })
   }
 
-  updateCurrentTags = tags => {
-    const currentTags = tags.map(tag => ({
-      name: tag.text,
-      x: tag.box.x(),
-      y: tag.box.y(),
-      width: tag.box.width(),
-      height: tag.box.height()
-    }))
-    if (this.state.__lastAction === 'next') {
-      const taggedImages = this.state.taggedImages
-      taggedImages[0].tags = currentTags
-      this.setState({ taggedImages: taggedImages })
-    } else {
-      const unprocessedImages = this.state.unprocessedImages
-      unprocessedImages[0].tags = currentTags
-      this.setState({ unprocessedImages: unprocessedImages })
-    }
+  updateTag = tag => {
+    const currentImage = this.state.currentImage
+    currentImage.tags[tag.id] = tag
+    this.setState(currentImage: currentImage)
+  }
+
+  removeTag = id => {
+    const currentImage = this.state.currentImage
+    delete currentImage.tags[id]
+    this.setState({currentImage: currentImage})
   }
 
   render() {
@@ -101,7 +94,7 @@ class App extends Component {
             Next
           </button>
           {this.state.currentImage && (
-            <Tagger image={this.state.currentImage.url} tags={this.state.currentImage.tags} updateTags={this.updateCurrentTags} />
+            <Tagger image={this.state.currentImage.url} tags={this.state.currentImage.tags} updateTag={this.updateTag} removeTag={this.removeTag}/>
           )}
         </div>
       </div>
