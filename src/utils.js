@@ -97,13 +97,13 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
   }
 
   const { x, y } = topLeft.position()
-/*  const groupPosition = group.position()
+  /*  const groupPosition = group.position()
   console.log(`group position ${groupPosition.x} ${groupPosition.y}`)
   group.position({x: groupPosition.x + x, y: groupPosition.y})
   console.log(`group position 2 ${groupPosition.x} ${groupPosition.y}`)
   console.log(`topLeft position ${x} ${y}`)
 */
-  rect.position({ x, y})
+  rect.position({ x, y })
   label.position({ x: x + LABEL_DEFAULTS.xOffset, y: y + LABEL_DEFAULTS.yOffset })
 
   const width = topRight.getX() - topLeft.getX()
@@ -114,7 +114,7 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
     group.width(width)
     group.height(height)
   }
-  onUpdate({x, y, width, height})
+  onUpdate({ x, y, width, height })
 }
 
 const BOUNDING_BOX_DEFAULTS = {
@@ -127,18 +127,20 @@ const BOUNDING_BOX_DEFAULTS = {
 
 const colors = scaleOrdinal(schemeCategory10)
 
-const createBoundingBox = ({
-  x,
-  y,
-  width = BOUNDING_BOX_DEFAULTS.width,
-  height = BOUNDING_BOX_DEFAULTS.height,
-  text,
-  id,
-  color = colors(id)
-},
-onDragMove,
-onDragEnd) => {
-  const group = new Konva.Group({ x, y, draggable: true, id, width, height})
+const createBoundingBox = (
+  {
+    x,
+    y,
+    width = BOUNDING_BOX_DEFAULTS.width,
+    height = BOUNDING_BOX_DEFAULTS.height,
+    text,
+    id,
+    color = colors(id)
+  },
+  onDragMove,
+  onDragEnd
+) => {
+  const group = new Konva.Group({ x, y, draggable: true, id, width, height })
 
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 

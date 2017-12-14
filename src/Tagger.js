@@ -75,7 +75,7 @@ class Tagger extends React.Component {
     Object.values(this.props.tags).forEach(({ x, y, width, height, name }) => {
       const id = `tag${tagId}`
       tagId += 1
-      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id }, 
+      const boundingBox = createBoundingBox({ x, y, width, height, text: name, id },
         this.rearrengeBoundingBoxes, this.updateTag)
       this._layer.add(boundingBox)
       this._boundingBoxes[id] = boundingBox

@@ -55,9 +55,10 @@ class App extends Component {
       }))
 
       const intersection = imagesMetadata.filter(
-        obj => (previousState.taggedImages.map(i => i.name).indexOf(obj.name) === -1 &&
+        obj =>
+          previousState.taggedImages.map(i => i.name).indexOf(obj.name) === -1 &&
           previousState.unprocessedImages.map(i => i.name).indexOf(obj.name) === -1 &&
-          (!previousState.currentImage || previousState.currentImage.name !== obj.name))
+          (!previousState.currentImage || previousState.currentImage.name !== obj.name)
       )
       return {
         currentImage: previousState.currentImage
@@ -71,13 +72,13 @@ class App extends Component {
   updateTag = tag => {
     const currentImage = this.state.currentImage
     currentImage.tags[tag.id] = tag
-    this.setState(currentImage: currentImage)
+    this.setState({ currentImage: currentImage })
   }
 
   removeTag = id => {
     const currentImage = this.state.currentImage
     delete currentImage.tags[id]
-    this.setState({currentImage: currentImage})
+    this.setState({ currentImage: currentImage })
   }
 
   _rowRenderer = ({ index, key, style }) => (
@@ -117,7 +118,12 @@ class App extends Component {
             {'\u2190'} Prev
           </button>
           {this.state.currentImage && (
-            <Tagger image={this.state.currentImage.url} tags={this.state.currentImage.tags} updateTag={this.updateTag} removeTag={this.removeTag}/>
+            <Tagger
+              image={this.state.currentImage.url}
+              tags={this.state.currentImage.tags}
+              updateTag={this.updateTag}
+              removeTag={this.removeTag}
+            />
           )}
           <button onClick={this.nextImage} disabled={!this.state.unprocessedImages.length}>
             Next {'\u2192'}
