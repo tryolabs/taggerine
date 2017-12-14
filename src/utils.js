@@ -157,9 +157,8 @@ const createBoundingBox = (
 
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 
-  group.add(
-    new Konva.Rect({ x: 0, y: 0, width, height, stroke, strokeWidth, fill: color, opacity })
-  )
+  const rect =new Konva.Rect({ x: 0, y: 0, width, height, stroke, strokeWidth, fill: color, opacity })
+  group.add(rect)
 
   const topLeft = createAnchor({ x: 0, y: 0, name: ANCHOR_NAMES.topLeft })
   const topRight = createAnchor({ x: width, y: 0, name: ANCHOR_NAMES.topRight })
@@ -182,9 +181,13 @@ const createBoundingBox = (
     anchor.on('dragend', function() {
       const layer = this.getLayer()
       group.setDraggable(true)
+      group.x(group.x() + rect.x())
+      group.y(group.y() + rect.y())
+      console.log(group.x())
+      console.log(group.y())
       layer.draw()
       onDragEnd({
-        id,
+        id: id,
         name: text,
         x: group.x(),
         y: group.y(),
