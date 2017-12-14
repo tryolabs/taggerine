@@ -27,7 +27,9 @@ const createAnchor = ({ x, y, name }) => {
     const layer = this.getLayer()
     document.body.style.cursor = 'default'
     anchor.setStrokeWidth(2)
-    layer.draw()
+    if (layer) {
+      layer.draw()
+    }
   })
 
   return group
@@ -142,6 +144,17 @@ const createBoundingBox = (
 ) => {
   const group = new Konva.Group({ x, y, draggable: true, id, width, height })
 
+  group.on('dragend', function() {
+    onDragEnd({
+      id,
+      name: text,
+      x: group.x(),
+      y: group.y(),
+      width: group.width(),
+      height: group.height()
+    })
+  })
+
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 
   group.add(
@@ -169,9 +182,15 @@ const createBoundingBox = (
     anchor.on('dragend', function() {
       const layer = this.getLayer()
       group.setDraggable(true)
-      console.log(id)
-      onDragEnd(id, text, group.x(), group.y(), group.width(), group.height())
       layer.draw()
+      onDragEnd({
+        id,
+        name: text,
+        x: group.x(),
+        y: group.y(),
+        width: group.width(),
+        height: group.height()
+      })
     })
   })
   const label = createLabel({ text: text, color })
