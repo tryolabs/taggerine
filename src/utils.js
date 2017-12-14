@@ -99,12 +99,7 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
   }
 
   const { x, y } = topLeft.position()
-  /*  const groupPosition = group.position()
-  console.log(`group position ${groupPosition.x} ${groupPosition.y}`)
-  group.position({x: groupPosition.x + x, y: groupPosition.y})
-  console.log(`group position 2 ${groupPosition.x} ${groupPosition.y}`)
-  console.log(`topLeft position ${x} ${y}`)
-*/
+
   rect.position({ x, y })
   label.position({ x: x + LABEL_DEFAULTS.xOffset, y: y + LABEL_DEFAULTS.yOffset })
 
@@ -146,7 +141,6 @@ const createBoundingBox = (
 
   group.on('dragmove', function(){
     const layer = this.getLayer()
-    console.log(layer.width())
     if (group.x() <  0) {
       group.x(0)
     }
@@ -201,7 +195,6 @@ const createBoundingBox = (
       if (anchor.y() + group.y() > layer.height()){
         anchor.y(layer.height()-group.y())
       }
-      console.log(anchor.x())
       updateBoundingBox(this, onDragMove)
       layer.draw()
     })
