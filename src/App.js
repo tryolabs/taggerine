@@ -201,6 +201,11 @@ class App extends Component {
     )
   }
 
+
+  _generateDownloadFile = () => {
+    return JSON.stringify(this.state.tags)
+  }
+
   render() {
     const currentImage = getCurrentImage(this.state)
     const currentImageTags = currentImage ? getImageTagsAsList(this.state, currentImage.name) : []
@@ -236,11 +241,7 @@ class App extends Component {
             {'\u2190'} Prev
           </button>
           {currentImage && (
-            <Tagger
-              image={currentImage.url}
-              tags={currentImageTags}
-              updateTag={this.updateTag}
-            />
+            <Tagger image={currentImage.url} tags={currentImageTags} updateTag={this.updateTag} />
           )}
           <button onClick={this.nextImage} disabled={!this.state.unprocessed.length}>
             Next {'\u2192'}
@@ -282,6 +283,9 @@ class App extends Component {
             ]}
           </AutoSizer>
         </div>
+        <footer id="footer">
+          <a download="tags.json" href={"data:application/json;charset=utf-8," + encodeURIComponent(this._generateDownloadFile())}>Download</a>
+        </footer>
       </div>
     )
   }

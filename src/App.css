@@ -1,12 +1,13 @@
 .App {
   display: grid;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 110px 200px 100px auto;
+  grid-template-rows: 110px 200px 100px auto 50px;
   grid-template-areas:
     'header header header'
     'uploader tagger recent-tags'
     'uploaded-list tagger recent-tags'
-    'uploaded-list tagger tags';
+    'uploaded-list tagger tags'
+    'footer footer footer';
   justify-content: stretch;
 
   height: 100%;
@@ -26,6 +27,17 @@
   color: white;
 
   padding: 20px;
+}
+
+#footer {
+  grid-area: footer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #222;
+  color: white;
+
 }
 
 .title {

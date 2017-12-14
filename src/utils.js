@@ -144,6 +144,24 @@ const createBoundingBox = (
 ) => {
   const group = new Konva.Group({ x, y, draggable: true, id, width, height })
 
+  group.on('dragmove', function(){
+    const layer = this.getLayer()
+    console.log(layer.width())
+    if (group.x() <  0) {
+      group.x(0)
+    }
+    if (group.y() <  0) {
+      group.y(0)
+    }
+    if (group.x()  + group.width() >  layer.width()) {
+      group.x(layer.width() - group.width())
+    }
+    if (group.y()  + group.height() >  layer.height()) {
+      group.y(layer.height() - group.height())
+    }
+
+  })
+
   group.on('dragend', function() {
     onDragEnd({
       id,
@@ -171,6 +189,19 @@ const createBoundingBox = (
 
     anchor.on('dragmove', function() {
       const layer = this.getLayer()
+      if (anchor.x() < -(group.x())){
+        anchor.x(-(group.x()))
+      }
+      if (anchor.x() + group.x() > layer.width()){
+        anchor.x(layer.width()-group.x())
+      }
+      if (anchor.y() < -(group.y())){
+        anchor.y(-(group.y()))
+      }
+      if (anchor.y() + group.y() > layer.height()){
+        anchor.y(layer.height()-group.y())
+      }
+      console.log(anchor.x())
       updateBoundingBox(this, onDragMove)
       layer.draw()
     })
@@ -183,8 +214,6 @@ const createBoundingBox = (
       group.setDraggable(true)
       group.x(group.x() + rect.x())
       group.y(group.y() + rect.y())
-      console.log(group.x())
-      console.log(group.y())
       layer.draw()
       onDragEnd({
         id: id,
