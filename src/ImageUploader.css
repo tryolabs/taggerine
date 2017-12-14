@@ -1,0 +1,18 @@
+#uploader > div {
+  height: 80%;
+}
+
+.files-dropzone {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+
+  height: 100%;
+
+  text-align: center;
+
+  border: dashed 3px black;
+  border-radius: 10px;
+
+  background-color: lightgray;
+}

@@ -1,6 +1,8 @@
 import React from 'react'
 import Files from 'react-files'
 
+import './ImageUploader.css'
+
 class ImageUploader extends React.Component {
   onFilesChange = files => {
     this.props.uploadImages(files)

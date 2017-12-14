@@ -3,6 +3,8 @@ import Konva from 'konva'
 
 import { createBoundingBox, createLabel } from './utils'
 
+import './Tagger.css'
+
 const MAX_HEIGHT = 800
 const MAX_WIDTH = 700
 
@@ -160,11 +162,9 @@ class Tagger extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="tagger">
         <div id="canvas-container" />
-        <hr />
         <button onClick={this.addBoundingBox}>Add Bounding Box</button>
-        <hr />
         <ul>
           {Object.values(this.props.tags).map(tag => (
             <li key={tag.id}>
