@@ -225,4 +225,4 @@ const createBoundingBox = (
   return group
 }
 
-export { createBoundingBox, createLabel }
+export { createBoundingBox }
