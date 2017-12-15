@@ -5,13 +5,12 @@ import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
 import Tagger from './Tagger'
 import ImageUploader from './ImageUploader'
-import TrashIcon from 'react-icons/lib/fa/trash';
-import RepeatIcon from 'react-icons/lib/fa/repeat';
-import DownloadIcon from 'react-icons/lib/fa/download';
-import ArrowRightIcon from 'react-icons/lib/fa/arrow-right';
-import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left';
-import CheckIcon from 'react-icons/lib/fa/check';
-
+import TrashIcon from 'react-icons/lib/fa/trash'
+import RepeatIcon from 'react-icons/lib/fa/repeat'
+import DownloadIcon from 'react-icons/lib/fa/download'
+import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
+import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
+import CheckIcon from 'react-icons/lib/fa/check'
 
 import './App.css'
 
@@ -41,37 +40,36 @@ const getRecentTags = state => {
     Object.values(tags).forEach(imageTagsObj => {
       Object.values(imageTagsObj).forEach(tag => recentTags.push(tag))
     })
-
   }
   return recentTags
 }
 
 const getImagesSorted = (state, processed, unprocessed) => {
   let allImages = []
-  if (processed && unprocessed){
-    allImages = state.processed.concat(state.unprocessed)  
-  } else if(processed) {
+  if (processed && unprocessed) {
+    allImages = state.processed.concat(state.unprocessed)
+  } else if (processed) {
     allImages = state.processed
   } else {
     allImages = state.unprocessed
   }
-  
+
   return allImages.sort((aImg, bImg) => {
-    return aImg.localeCompare(bImg);
+    return aImg.localeCompare(bImg)
   })
 }
 
 const isImageProcessed = (state, imageName) => {
-  return (imageName in state.tags) && !!Object.keys(state.tags[imageName]).length
+  return imageName in state.tags && !!Object.keys(state.tags[imageName]).length
 }
 
-const countTaggedImages = (state) => {
+const countTaggedImages = state => {
   return Object.keys(state.images).reduce((accumulator, currentTag) => {
-        if (isImageProcessed(state, currentTag)) {
-          accumulator+=1
-        }
-        return accumulator
-      }, 0)
+    if (isImageProcessed(state, currentTag)) {
+      accumulator += 1
+    }
+    return accumulator
+  }, 0)
 }
 
 class App extends Component {
@@ -109,18 +107,24 @@ class App extends Component {
   uploadImages = images => {
     console.log('uploadImages', images)
     this.setState(prevState => {
-      const newImages = images.reduce((files, file) => ({
-        ...files,
-        [file.name]: {
-          name: file.name,
-          extension: file.extension,
-          url: file.preview.url,
-        }
-      }), {})
+      const newImages = images.reduce(
+        (files, file) => ({
+          ...files,
+          [file.name]: {
+            name: file.name,
+            extension: file.extension,
+            url: file.preview.url
+          }
+        }),
+        {}
+      )
 
-      const unprocessed = [...prevState.unprocessed, ...Object.keys(newImages).filter(imageName => !prevState.unprocessed.includes(imageName))]
+      const unprocessed = [
+        ...prevState.unprocessed,
+        ...Object.keys(newImages).filter(imageName => !prevState.unprocessed.includes(imageName))
+      ]
       unprocessed.sort((aImg, bImg) => {
-        return aImg.localeCompare(bImg);
+        return aImg.localeCompare(bImg)
       })
       return {
         images: { ...prevState.images, ...newImages },
@@ -203,21 +207,21 @@ class App extends Component {
     }, this.saveState)
   }
 
-  _changeCurrentImage = (imageName) => {
+  _changeCurrentImage = imageName => {
     this.setState(prevState => {
       let result = {}
       const currentImageName = prevState.unprocessed[0]
       prevState.unprocessed.splice(0, 1)
-      if (prevState.unprocessed.indexOf(imageName) >= 0) {    
+      if (prevState.unprocessed.indexOf(imageName) >= 0) {
         prevState.unprocessed.splice(prevState.unprocessed.indexOf(imageName), 1)
         result = {
-          unprocessed: [imageName,...prevState.unprocessed],
+          unprocessed: [imageName, ...prevState.unprocessed],
           processed: [...prevState.processed, currentImageName]
         }
-      } else if (prevState.processed.indexOf(imageName) >= 0){
+      } else if (prevState.processed.indexOf(imageName) >= 0) {
         prevState.processed.splice(prevState.processed.indexOf(imageName), 1)
         result = {
-          unprocessed: [imageName,...prevState.unprocessed]
+          unprocessed: [imageName, ...prevState.unprocessed]
         }
       } else {
         result = {
@@ -238,12 +242,19 @@ class App extends Component {
     console.log(image)
     return (
       <div key={key} style={style}>
-        <div className={isCurrentImage ? "list-item selected-image-row" : "list-item"} onClick={() => this._changeCurrentImage(imageName)}>
+        <div
+          className={isCurrentImage ? 'list-item selected-image-row' : 'list-item'}
+          onClick={() => this._changeCurrentImage(imageName)}
+        >
           <div className="image-item">
             <img className="thumbnail" src={image.url} alt={imageName} />
             <span className="image-item-name">{imageName}</span>
           </div>
-          {isProcessed ? <div className="image-item"><CheckIcon /></div> : null}
+          {isProcessed ? (
+            <div className="image-item">
+              <CheckIcon />
+            </div>
+          ) : null}
         </div>
       </div>
     )
@@ -259,8 +270,14 @@ class App extends Component {
           defaultValue={tag.name}
           onChange={e => this.updateTag({ ...tag, name: e.target.value })}
         />
-        <button className="tag-button" onClick={() => this.repeatTag(tag)}> <RepeatIcon/></button>
-        <button className="tag-button" onClick={() => this.removeTag(tag.id)}> <TrashIcon/></button>
+        <button className="tag-button" onClick={() => this.repeatTag(tag)}>
+          {' '}
+          <RepeatIcon />
+        </button>
+        <button className="tag-button" onClick={() => this.removeTag(tag.id)}>
+          {' '}
+          <TrashIcon />
+        </button>
       </div>
     )
   }
@@ -269,7 +286,12 @@ class App extends Component {
     const recentTagList = getRecentTags(this.state)
     const tag = recentTagList[index]
     return (
-      <div className="recentTag list-item" key={key} style={style} onClick={() => this.repeatTag(tag)}>
+      <div
+        className="recentTag list-item"
+        key={key}
+        style={style}
+        onClick={() => this.repeatTag(tag)}
+      >
         {tag.name}
       </div>
     )
@@ -296,7 +318,9 @@ class App extends Component {
         </header>
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
-          <span className="image-counter">{countTaggedImages(this.state)}/{Object.keys(this.state.images).length} images</span>
+          <span className="image-counter">
+            {countTaggedImages(this.state)}/{Object.keys(this.state.images).length} images
+          </span>
         </div>
         <div id="uploaded-list">
           <AutoSizer>
@@ -315,15 +339,27 @@ class App extends Component {
           </AutoSizer>
         </div>
         <div id="tagger">
-          <button onClick={this.prevImage} disabled={!this.state.processed.length}>
-            <ArrowLeftIcon/>
-          </button>
-          {currentImage && (
-            <Tagger image={currentImage.url} tags={currentImageTags} updateTag={this.updateTag} />
-          )}
-          <button onClick={this.nextImage} disabled={this.state.unprocessed.length <= 1}>
-            <ArrowRightIcon/>
-          </button>
+          <AutoSizer>
+            {({ width, height }) => (
+              <div style={{ width, height }} className="autosized-tagger">
+                <button onClick={this.prevImage} disabled={!this.state.processed.length}>
+                  <ArrowLeftIcon />
+                </button>
+                {currentImage && (
+                  <Tagger
+                    image={currentImage.url}
+                    tags={currentImageTags}
+                    updateTag={this.updateTag}
+                    width={width - 60}
+                    height={height}
+                  />
+                )}
+                <button onClick={this.nextImage} disabled={this.state.unprocessed.length <= 1}>
+                  <ArrowRightIcon />
+                </button>
+              </div>
+            )}
+          </AutoSizer>
         </div>
         <div id="recent-tags">
           <AutoSizer>
@@ -342,13 +378,18 @@ class App extends Component {
           </AutoSizer>
         </div>
         <div id="tag-actions">
-          <button className="button" onClick={this.addTag} key={0} disabled={!this.state.unprocessed.length}>
+          <button
+            className="button"
+            onClick={this.addTag}
+            key={0}
+            disabled={!this.state.unprocessed.length}
+          >
             Add Bounding Box
           </button>
         </div>
         <div id="tags">
           <AutoSizer>
-            {({ width, height }) => [
+            {({ width, height }) => (
               <List
                 key={1}
                 overscanRowCount={10}
@@ -360,7 +401,7 @@ class App extends Component {
                 height={height}
                 className="tag-list"
               />
-            ]}
+            )}
           </AutoSizer>
         </div>
         <footer id="footer">
@@ -368,12 +409,11 @@ class App extends Component {
             id="download"
             className="button"
             download="tags.json"
-            href={
-              'data:application/json;charset=utf-8,' +
-              encodeURIComponent(this._generateDownloadFile())
-            }
+            href={`data:application/json;charset=utf-8,${encodeURIComponent(
+              this._generateDownloadFile()
+            )}`}
           >
-            <DownloadIcon/> Download Tags
+            <DownloadIcon /> Download Tags
           </a>
         </footer>
       </div>

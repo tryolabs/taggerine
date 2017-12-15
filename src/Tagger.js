@@ -5,9 +5,6 @@ import { createBoundingBox } from './utils'
 
 import './Tagger.css'
 
-const MAX_HEIGHT = 800
-const MAX_WIDTH = 700
-
 class Tagger extends React.Component {
   addBoundingBoxes = () => {
     this.props.tags.forEach(({ x, y, width, height, name, id }) => {
@@ -38,8 +35,8 @@ class Tagger extends React.Component {
       const height = img.height
       const width = img.width
 
-      const heightScaleFactor = MAX_HEIGHT / img.height
-      const widthScaleFactor = MAX_WIDTH / img.width
+      const heightScaleFactor = this.props.height / img.height
+      const widthScaleFactor = this.props.width / img.width
       const scaleFactor =
         heightScaleFactor < widthScaleFactor ? heightScaleFactor : widthScaleFactor
 
@@ -53,7 +50,7 @@ class Tagger extends React.Component {
         y: 0,
         image: img,
         width: newWidth,
-        height: newHeight,
+        height: newHeight
       })
       // add the shape to the layer
       this._layer.add(this._image)
@@ -66,8 +63,8 @@ class Tagger extends React.Component {
   componentDidMount() {
     this._stage = new Konva.Stage({
       container: '#canvas-container',
-      width: MAX_WIDTH,
-      height: MAX_HEIGHT
+      width: this.props.width,
+      height: this.props.height
     })
 
     this._layer = new Konva.Layer()
@@ -80,7 +77,11 @@ class Tagger extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.image !== this.props.image) {
+    if (
+      prevProps.image !== this.props.image ||
+      prevProps.width !== this.props.width ||
+      prevProps.height !== this.props.height
+    ) {
       this._image.remove()
 
       Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())

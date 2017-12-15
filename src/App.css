@@ -19,7 +19,7 @@
   font-family: 'sans-serif';
 }
 
-#tag-actions{
+#tag-actions {
   grid-area: tag-actions;
   display: flex;
   align-items: center;
@@ -46,7 +46,6 @@
   justify-content: center;
   background-color: #222;
   color: white;
-
 }
 
 .title {
@@ -56,13 +55,20 @@
 #tagger {
   grid-area: tagger;
 
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-
   width: 100%;
 
   padding: 20px 0;
+}
+
+.autosized-tagger {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.autosized-tagger button {
+  align-self: stretch;
 }
 
 #uploader {
@@ -139,25 +145,25 @@
 .button {
   font: bold 15px Arial;
   text-decoration: none;
-  background-color: #EEEEEE;
+  background-color: #eeeeee;
   padding: 2px 6px 2px 6px;
-  border-top: 1px solid #CCCCCC;
+  border-top: 1px solid #cccccc;
   border-right: 1px solid #333333;
   border-bottom: 1px solid #333333;
-  border-left: 1px solid #CCCCCC;
+  border-left: 1px solid #cccccc;
   border-radius: 10px 10px;
 }
 
 #download {
   font: bold 15px Arial;
   text-decoration: none;
-  background-color: #EEEEEE;
+  background-color: #eeeeee;
   color: #333333;
   padding: 2px 6px 2px 6px;
-  border-top: 1px solid #CCCCCC;
+  border-top: 1px solid #cccccc;
   border-right: 1px solid #333333;
   border-bottom: 1px solid #333333;
-  border-left: 1px solid #CCCCCC;
+  border-left: 1px solid #cccccc;
   border-radius: 10px 10px;
 }
 
@@ -169,24 +175,24 @@
   padding: 10px;
 }
 
-.tag-button{
+.tag-button {
   margin-left: 5px;
 }
 
 .thumbnail {
-    border: 1px solid #ddd; /* Gray border */
-    border-radius: 4px;  /* Rounded border */
-    padding: 5px; /* Some padding */
-    height: 100px; /* Set a small width */
-    width: 100px;
+  border: 1px solid #ddd; /* Gray border */
+  border-radius: 4px; /* Rounded border */
+  padding: 5px; /* Some padding */
+  height: 100px; /* Set a small width */
+  width: 100px;
 }
 
 .thumbnail:hover {
-    box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+  box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
 }
 
 .selected-image-row {
-  background-color: rgba(108, 177, 49, .5);
+  background-color: rgba(108, 177, 49, 0.5);
 }
 
 .image-item-name {
