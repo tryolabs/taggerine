@@ -1,13 +1,15 @@
 .App {
   display: grid;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 110px 200px 100px auto 50px;
+  grid-template-rows: 110px 200px 100px 100px auto 50px;
   grid-template-areas:
     'header header header'
     'uploader tagger recent-tags'
     'uploaded-list tagger recent-tags'
+    'uploaded-list tagger tag-actions'
     'uploaded-list tagger tags'
     'footer footer footer';
+
   justify-content: stretch;
 
   height: 100%;
@@ -15,6 +17,13 @@
   padding-bottom: 10px;
 
   font-family: 'sans-serif';
+}
+
+#tag-actions{
+  grid-area: tag-actions;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #header {
@@ -76,6 +85,7 @@
   gird-area: recent-tags;
 
   padding: 20px;
+  min-height: 300px;
 }
 
 #tags {
@@ -90,9 +100,17 @@
 }
 
 .image-list-item {
-  padding: 5px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 
   text-align: left;
+
+  padding: 10px;
+}
+
+.arrow {
+  margin-right: 10px;
 }
 
 .image-list-empty {
@@ -107,4 +125,28 @@
 
 .image-counter {
   text-align: right;
+}
+
+.recent-tag-list {
+  border: solid 2px black;
+  border-radius: 5px;
+}
+
+.tag-list {
+  border: solid 2px black;
+  border-radius: 5px;
+}
+
+
+#download {
+  font: bold 15px Arial;
+  text-decoration: none;
+  background-color: #EEEEEE;
+  color: #333333;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #CCCCCC;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #CCCCCC;
+  border-radius: 10px 10px;
 }

@@ -3,6 +3,13 @@ import { AutoSizer, List } from 'react-virtualized'
 
 import Tagger from './Tagger'
 import ImageUploader from './ImageUploader'
+import TrashIcon from 'react-icons/lib/fa/trash';
+import RepeatIcon from 'react-icons/lib/fa/repeat';
+import DownloadIcon from 'react-icons/lib/fa/download';
+import ArrowRightIcon from 'react-icons/lib/fa/arrow-right';
+import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left';
+import CheckIcon from 'react-icons/lib/fa/check';
+
 
 import './App.css'
 
@@ -30,6 +37,10 @@ const getRecentTags = state => {
   })
 
   return tags.slice(0, 10)
+}
+
+const isImageProcessed = (state, imageName) => {
+  return (imageName in state.tags) && !!Object.keys(state.tags[imageName]).length
 }
 
 class App extends Component {
@@ -163,13 +174,17 @@ class App extends Component {
     const imageName = this.state.processed.concat(this.state.unprocessed)[index]
     const currentImage = getCurrentImage(this.state)
     const isCurrentImage = imageName === currentImage.name
-    const isProcessed = this.state.processed.includes(imageName)
+    const isProcessed = isImageProcessed(this.state, imageName)
 
     return (
-      <div className="image-list-item" key={key} style={style}>
-        {this.state.processed.concat(this.state.unprocessed)[index]}
-        {isProcessed ? ' P' : null}
-        {isCurrentImage ? ' A' : null}
+      <div key={key} style={style}>
+        <div className="image-list-item" >
+          <span>
+            {isCurrentImage ? <ArrowRightIcon className="arrow" />: null}
+            {this.state.processed.concat(this.state.unprocessed)[index]}
+          </span>
+          {isProcessed ? <CheckIcon/> : null}
+        </div>
       </div>
     )
   }
@@ -184,8 +199,8 @@ class App extends Component {
           defaultValue={tag.name}
           onChange={e => this.updateTag({ ...tag, name: e.target.value })}
         />
-        <button onClick={() => this.repeatTag(tag)}> Repeat Bounding Box</button>
-        <button onClick={() => this.removeTag(tag.id)}> Remove Bounding Box</button>
+        <button onClick={() => this.repeatTag(tag)}> <RepeatIcon/></button>
+        <button onClick={() => this.removeTag(tag.id)}> <TrashIcon/></button>
       </div>
     )
   }
@@ -196,11 +211,10 @@ class App extends Component {
     return (
       <div key={key} style={style}>
         {tag.name}
-        <button onClick={() => this.repeatTag(tag)}> Repeat Bounding Box</button>
+        <button onClick={() => this.repeatTag(tag)}> <RepeatIcon/></button>
       </div>
     )
   }
-
 
   _generateDownloadFile = () => {
     return JSON.stringify(this.state.tags)
@@ -238,13 +252,13 @@ class App extends Component {
         </div>
         <div id="tagger">
           <button onClick={this.prevImage} disabled={!this.state.processed.length}>
-            {'\u2190'} Prev
+            <ArrowLeftIcon/>
           </button>
           {currentImage && (
             <Tagger image={currentImage.url} tags={currentImageTags} updateTag={this.updateTag} />
           )}
-          <button onClick={this.nextImage} disabled={!this.state.unprocessed.length}>
-            Next {'\u2192'}
+          <button onClick={this.nextImage} disabled={this.state.unprocessed.length <= 1}>
+            <ArrowRightIcon/>
           </button>
         </div>
         <div id="recent-tags">
@@ -263,12 +277,14 @@ class App extends Component {
             )}
           </AutoSizer>
         </div>
+        <div id="tag-actions">
+          <button onClick={this.addTag} key={0} disabled={!this.state.unprocessed.length}>
+            Add Bounding Box
+          </button>
+        </div>
         <div id="tags">
           <AutoSizer>
             {({ width, height }) => [
-              <button onClick={this.addTag} key={0}>
-                Add Bounding Box
-              </button>,
               <List
                 key={1}
                 overscanRowCount={10}
@@ -284,7 +300,16 @@ class App extends Component {
           </AutoSizer>
         </div>
         <footer id="footer">
-          <a download="tags.json" href={"data:application/json;charset=utf-8," + encodeURIComponent(this._generateDownloadFile())}>Download</a>
+          <a
+            id="download"
+            download="tags.json"
+            href={
+              'data:application/json;charset=utf-8,' +
+              encodeURIComponent(this._generateDownloadFile())
+            }
+          >
+            <DownloadIcon/> Download Tags
+          </a>
         </footer>
       </div>
     )

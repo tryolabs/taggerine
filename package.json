@@ -8,6 +8,7 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-files": "^2.4.3",
+    "react-icons": "^2.2.7",
     "react-konva": "^1.6.4",
     "react-scripts": "1.0.17",
     "react-virtualized": "^9.13.0"
