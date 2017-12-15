@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { AutoSizer, List } from 'react-virtualized'
 
+import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
+
 import Tagger from './Tagger'
 import ImageUploader from './ImageUploader'
 import TrashIcon from 'react-icons/lib/fa/trash';
@@ -51,6 +53,8 @@ class App extends Component {
     tags: {}
   }
 
+  saveState = () => saveToLocalStorage(this.state)
+
   nextImage = () => {
     console.log('nextImage')
     this.setState(prevState => {
@@ -59,7 +63,7 @@ class App extends Component {
         unprocessed: [...prevState.unprocessed],
         processed: [...prevState.processed, currentImageName]
       }
-    })
+    }, this.saveState)
   }
 
   prevImage = () => {
@@ -70,21 +74,20 @@ class App extends Component {
         unprocessed: [lastProcessedImageName, ...prevState.unprocessed],
         processed: [...prevState.processed]
       }
-    })
+    }, this.saveState)
   }
 
   uploadImages = images => {
     console.log('uploadImages', images)
     this.setState(prevState => {
-      const newImages = {}
-      images.forEach(file => {
-        newImages[file.name] = {
+      const newImages = images.reduce((files, file) => ({
+        ...files,
+        [file.name]: {
           name: file.name,
           extension: file.extension,
           url: file.preview.url,
-          file
         }
-      })
+      }), {})
 
       return {
         images: { ...prevState.images, ...newImages },
@@ -93,7 +96,7 @@ class App extends Component {
           ...Object.keys(newImages).filter(imageName => !prevState.unprocessed.includes(imageName))
         ]
       }
-    })
+    }, this.saveState)
   }
 
   addTag = () => {
@@ -114,7 +117,7 @@ class App extends Component {
           }
         }
       }
-    })
+    }, this.saveState)
   }
 
   repeatTag = tag => {
@@ -135,7 +138,7 @@ class App extends Component {
           }
         }
       }
-    })
+    }, this.saveState)
   }
 
   updateTag = tag => {
@@ -150,7 +153,7 @@ class App extends Component {
           [currentImage.name]: { ...currentImageTags, [tag.id]: tag }
         }
       }
-    })
+    }, this.saveState)
   }
 
   removeTag = id => {
@@ -167,7 +170,7 @@ class App extends Component {
           [currentImage.name]: { ...currentImageTags }
         }
       }
-    })
+    }, this.saveState)
   }
 
   _uploadedListRowRenderer = ({ index, key, style }) => {
@@ -218,6 +221,11 @@ class App extends Component {
 
   _generateDownloadFile = () => {
     return JSON.stringify(this.state.tags)
+  }
+
+  componentWillMount() {
+    const prevState = loadFromLocalStorage()
+    this.setState(prevState)
   }
 
   render() {
