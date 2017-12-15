@@ -65,6 +65,15 @@ const isImageProcessed = (state, imageName) => {
   return (imageName in state.tags) && !!Object.keys(state.tags[imageName]).length
 }
 
+const countTaggedImages = (state) => {
+  return Object.keys(state.images).reduce((accumulator, currentTag) => {
+        if (isImageProcessed(state, currentTag)) {
+          accumulator+=1
+        }
+        return accumulator
+      }, 0)
+}
+
 class App extends Component {
   state = {
     images: {},
@@ -287,7 +296,7 @@ class App extends Component {
         </header>
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
-          <span className="image-counter">{this.state.processed.length}/{Object.keys(this.state.images).length} images</span>
+          <span className="image-counter">{countTaggedImages(this.state)}/{Object.keys(this.state.images).length} images</span>
         </div>
         <div id="uploaded-list">
           <AutoSizer>
