@@ -286,7 +286,7 @@ class App extends Component {
           </AutoSizer>
         </div>
         <div id="tag-actions">
-          <button onClick={this.addTag} key={0} disabled={!this.state.unprocessed.length}>
+          <button className="button" onClick={this.addTag} key={0} disabled={!this.state.unprocessed.length}>
             Add Bounding Box
           </button>
         </div>
@@ -310,6 +310,7 @@ class App extends Component {
         <footer id="footer">
           <a
             id="download"
+            className="button"
             download="tags.json"
             href={
               'data:application/json;charset=utf-8,' +
