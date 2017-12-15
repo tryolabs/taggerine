@@ -195,21 +195,28 @@ class App extends Component {
   }
 
   _changeCurrentImage = (imageName) => {
-    if (this.state.unprocessed.indexOf(imageName) >= 0) {
-      this.setState(prevState => {
+    this.setState(prevState => {
+      let result = {}
+      const currentImageName = prevState.unprocessed[0]
+      prevState.unprocessed.splice(0, 1)
+      if (prevState.unprocessed.indexOf(imageName) >= 0) {    
         prevState.unprocessed.splice(prevState.unprocessed.indexOf(imageName), 1)
-        return {
-          unprocessed: [imageName,...prevState.unprocessed]
+        result = {
+          unprocessed: [imageName,...prevState.unprocessed],
+          processed: [...prevState.processed, currentImageName]
         }
-      })
-    } else {
-      this.setState(prevState => {
+      } else if (prevState.processed.indexOf(imageName) >= 0){
         prevState.processed.splice(prevState.processed.indexOf(imageName), 1)
-        return {
+        result = {
           unprocessed: [imageName,...prevState.unprocessed]
         }
-      })
-    }
+      } else {
+        result = {
+          unprocessed: [imageName]
+        }
+      }
+      return result
+    })
   }
 
   _uploadedListRowRenderer = ({ index, key, style }) => {
@@ -280,7 +287,7 @@ class App extends Component {
         </header>
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
-          <span className="image-counter">{Object.keys(this.state.images).length} images</span>
+          <span className="image-counter">{this.state.processed.length}/{Object.keys(this.state.images).length} images</span>
         </div>
         <div id="uploaded-list">
           <AutoSizer>
