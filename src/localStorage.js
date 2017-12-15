@@ -6,8 +6,16 @@ const loadFromLocalStorage = (key = APP_KEY) => {
   return obj
 }
 
+const blacklistedFields = ['images', 'unprocessed', 'processed']
+
 const saveToLocalStorage = (state, key = APP_KEY) => {
-  const json = JSON.stringify(state)
+  const stateCopy = { ...state }
+  blacklistedFields.forEach(field => {
+    if (Object.keys(stateCopy).includes(field)) {
+      delete stateCopy[field]
+    }
+  })
+  const json = JSON.stringify(stateCopy)
   return window.localStorage.setItem(key, json)
 }
 
