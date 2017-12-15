@@ -99,13 +99,12 @@
   border-radius: 5px;
 }
 
-.image-list-item {
+.list-item {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-
   text-align: left;
-
+  cursor: pointer;
   padding: 10px;
 }
 
@@ -160,4 +159,41 @@
   border-bottom: 1px solid #333333;
   border-left: 1px solid #CCCCCC;
   border-radius: 10px 10px;
+}
+
+.recentTag {
+  cursor: pointer;
+}
+
+.tag-item {
+  padding: 10px;
+}
+
+.tag-button{
+  margin-left: 5px;
+}
+
+.thumbnail {
+    border: 1px solid #ddd; /* Gray border */
+    border-radius: 4px;  /* Rounded border */
+    padding: 5px; /* Some padding */
+    height: 100px; /* Set a small width */
+    width: 100px;
+}
+
+.thumbnail:hover {
+    box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+
+.selected-image-row {
+  background-color: rgba(108, 177, 49, .5);
+}
+
+.image-item-name {
+  margin-left: 12px;
+}
+
+.image-item {
+  display: flex;
+  align-items: center;
 }

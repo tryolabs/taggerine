@@ -33,12 +33,32 @@ const getImageTagsAsList = (state, imageName) =>
     }))
 
 const getRecentTags = state => {
-  const tags = []
-  Object.values(state.tags).forEach(imageTagsObj => {
-    Object.values(imageTagsObj).forEach(tag => tags.push(tag))
-  })
+  const recentTags = []
+  const currentImage = getCurrentImage(state)
+  if (currentImage) {
+    const tags = JSON.parse(JSON.stringify(state.tags))
+    delete tags[currentImage.name]
+    Object.values(tags).forEach(imageTagsObj => {
+      Object.values(imageTagsObj).forEach(tag => recentTags.push(tag))
+    })
 
-  return tags.slice(0, 10)
+  }
+  return recentTags
+}
+
+const getImagesSorted = (state, processed, unprocessed) => {
+  let allImages = []
+  if (processed && unprocessed){
+    allImages = state.processed.concat(state.unprocessed)  
+  } else if(processed) {
+    allImages = state.processed
+  } else {
+    allImages = state.unprocessed
+  }
+  
+  return allImages.sort((aImg, bImg) => {
+    return aImg.localeCompare(bImg);
+  })
 }
 
 const isImageProcessed = (state, imageName) => {
@@ -89,12 +109,13 @@ class App extends Component {
         }
       }), {})
 
+      const unprocessed = [...prevState.unprocessed, ...Object.keys(newImages).filter(imageName => !prevState.unprocessed.includes(imageName))]
+      unprocessed.sort((aImg, bImg) => {
+        return aImg.localeCompare(bImg);
+      })
       return {
         images: { ...prevState.images, ...newImages },
-        unprocessed: [
-          ...prevState.unprocessed,
-          ...Object.keys(newImages).filter(imageName => !prevState.unprocessed.includes(imageName))
-        ]
+        unprocessed: unprocessed
       }
     }, this.saveState)
   }
@@ -173,20 +194,40 @@ class App extends Component {
     }, this.saveState)
   }
 
+  _changeCurrentImage = (imageName) => {
+    if (this.state.unprocessed.indexOf(imageName) >= 0) {
+      this.setState(prevState => {
+        prevState.unprocessed.splice(prevState.unprocessed.indexOf(imageName), 1)
+        return {
+          unprocessed: [imageName,...prevState.unprocessed]
+        }
+      })
+    } else {
+      this.setState(prevState => {
+        prevState.processed.splice(prevState.processed.indexOf(imageName), 1)
+        return {
+          unprocessed: [imageName,...prevState.unprocessed]
+        }
+      })
+    }
+  }
+
   _uploadedListRowRenderer = ({ index, key, style }) => {
-    const imageName = this.state.processed.concat(this.state.unprocessed)[index]
+    const sortedImages = getImagesSorted(this.state, true, true)
+    const imageName = sortedImages[index]
     const currentImage = getCurrentImage(this.state)
     const isCurrentImage = imageName === currentImage.name
     const isProcessed = isImageProcessed(this.state, imageName)
-
+    const image = this.state.images[imageName]
+    console.log(image)
     return (
       <div key={key} style={style}>
-        <div className="image-list-item" >
-          <span>
-            {isCurrentImage ? <ArrowRightIcon className="arrow" />: null}
-            {this.state.processed.concat(this.state.unprocessed)[index]}
-          </span>
-          {isProcessed ? <CheckIcon/> : null}
+        <div className={isCurrentImage ? "list-item selected-image-row" : "list-item"} onClick={() => this._changeCurrentImage(imageName)}>
+          <div className="image-item">
+            <img className="thumbnail" src={image.url} alt={imageName} />
+            <span className="image-item-name">{imageName}</span>
+          </div>
+          {isProcessed ? <div className="image-item"><CheckIcon /></div> : null}
         </div>
       </div>
     )
@@ -196,14 +237,14 @@ class App extends Component {
     const tagList = getImageTagsAsList(this.state, getCurrentImage(this.state).name)
     const tag = tagList[index]
     return (
-      <div key={key} style={style}>
+      <div className="tag-item" key={key} style={style}>
         <input
           type="text"
           defaultValue={tag.name}
           onChange={e => this.updateTag({ ...tag, name: e.target.value })}
         />
-        <button onClick={() => this.repeatTag(tag)}> <RepeatIcon/></button>
-        <button onClick={() => this.removeTag(tag.id)}> <TrashIcon/></button>
+        <button className="tag-button" onClick={() => this.repeatTag(tag)}> <RepeatIcon/></button>
+        <button className="tag-button" onClick={() => this.removeTag(tag.id)}> <TrashIcon/></button>
       </div>
     )
   }
@@ -212,9 +253,8 @@ class App extends Component {
     const recentTagList = getRecentTags(this.state)
     const tag = recentTagList[index]
     return (
-      <div key={key} style={style}>
+      <div className="recentTag list-item" key={key} style={style} onClick={() => this.repeatTag(tag)}>
         {tag.name}
-        <button onClick={() => this.repeatTag(tag)}> <RepeatIcon/></button>
       </div>
     )
   }
@@ -249,7 +289,7 @@ class App extends Component {
                 overscanRowCount={10}
                 noRowsRenderer={() => <div className="image-list-empty">No files</div>}
                 rowCount={Object.keys(this.state.images).length}
-                rowHeight={50}
+                rowHeight={130}
                 rowRenderer={this._uploadedListRowRenderer}
                 width={width}
                 height={height}
