@@ -6,7 +6,7 @@ const loadFromLocalStorage = (key = APP_KEY) => {
   return obj
 }
 
-const blacklistedFields = ['images', 'unprocessed', 'processed']
+const blacklistedFields = ['images', 'currentImageIndex']
 
 const saveToLocalStorage = (state, key = APP_KEY) => {
   const stateCopy = { ...state }

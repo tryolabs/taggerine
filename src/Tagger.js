@@ -67,7 +67,8 @@ class Tagger extends React.Component {
       // add the shape to the layer
       this._layer.add(this._image)
       this._image.setZIndex(0)
-      this._layer.draw()
+      this.addBoundingBoxes()
+      /*this._layer.draw()*/
     }
     img.src = this.props.image
   }
@@ -85,7 +86,7 @@ class Tagger extends React.Component {
     this.addImage()
 
     this._boundingBoxes = {}
-    this.addBoundingBoxes()
+    /*this.addBoundingBoxes()*/
   }
 
   componentDidUpdate(prevProps) {
@@ -100,7 +101,6 @@ class Tagger extends React.Component {
       this._boundingBoxes = {}
 
       this.addImage()
-      this.addBoundingBoxes()
     } else if (prevProps.tags !== this.props.tags) {
       Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
       this.addBoundingBoxes()
