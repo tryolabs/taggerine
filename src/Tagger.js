@@ -9,9 +9,10 @@ class Tagger extends React.Component {
   addBoundingBoxes = () => {
     this.props.tags.forEach(({ x, y, width, height, name, id }) => {
       const boundingBox = createBoundingBox(
-        { x, y, width, height, text: name, id },
+        { x: x*this._image.width(),y: y*this._image.height(), width: width*this._image.width(),
+          height: height*this._image.height(), text: name, id },
         this.rearrengeBoundingBoxes,
-        this.props.updateTag
+        this.updateTag
       )
       this._layer.add(boundingBox)
       this._boundingBoxes[id] = boundingBox
@@ -29,6 +30,17 @@ class Tagger extends React.Component {
     })
   }
 
+  updateTag = (unconvertedObject) => {
+    const convertedObject = {
+      x: unconvertedObject.x/this._image.width(),
+      y: unconvertedObject.y/this._image.height(),
+      width: unconvertedObject.width/this._image.width(),
+      height: unconvertedObject.height/this._image.height(),
+      id: unconvertedObject.id,
+      name: unconvertedObject.name
+    }
+    this.props.updateTag(convertedObject)
+  }
   addImage() {
     var img = new Image()
     img.onload = e => {

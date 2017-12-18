@@ -141,13 +141,13 @@ class App extends Component {
     this.setState(prevState => {
       const currentImage = getCurrentImage(prevState)
       const currentImageTags = getImageTags(prevState, currentImage.name)
-
+      const newTag = { x: 0.14, y: 0.14, name: `tag${id}`, id, width: 0.14, height: 0.14 }
       return {
         tags: {
           ...prevState.tags,
           [currentImage.name]: {
             ...currentImageTags,
-            [id]: { x: 100, y: 100, name: `tag${id}`, id, width: 100, height: 100 }
+            [id]: newTag
           }
         }
       }
