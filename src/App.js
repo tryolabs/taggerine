@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { AutoSizer, List } from 'react-virtualized'
 
-import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
+import { loadFromLocalStorage, saveToLocalStorage, cleanLocalStorage } from './localStorage'
 
 import Tagger from './Tagger'
 import ImageUploader from './ImageUploader'
@@ -301,6 +301,10 @@ class App extends Component {
     return JSON.stringify(this.state.tags)
   }
 
+  _cleanAllTags = (e) => {
+    cleanLocalStorage()
+  }
+
   componentWillMount() {
     const prevState = loadFromLocalStorage()
     this.setState(prevState)
@@ -407,13 +411,21 @@ class App extends Component {
         <footer id="footer">
           <a
             id="download"
-            className="button"
+            className="button button-link"
             download="tags.json"
             href={`data:application/json;charset=utf-8,${encodeURIComponent(
               this._generateDownloadFile()
             )}`}
           >
             <DownloadIcon /> Download Tags
+          </a>
+          <a
+            id="cleanTags"
+            className="button button-link"
+            download="tags.json"
+            onClick={this._cleanAllTags}
+          >
+            <DownloadIcon /> Clean tags
           </a>
         </footer>
       </div>

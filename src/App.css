@@ -154,7 +154,7 @@
   border-radius: 10px 10px;
 }
 
-#download {
+.button-link {
   font: bold 15px Arial;
   text-decoration: none;
   background-color: #eeeeee;
@@ -202,4 +202,8 @@
 .image-item {
   display: flex;
   align-items: center;
+}
+
+#cleanTags {
+  margin-left: 12px;
 }

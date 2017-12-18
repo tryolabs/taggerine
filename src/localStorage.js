@@ -19,4 +19,8 @@ const saveToLocalStorage = (state, key = APP_KEY) => {
   return window.localStorage.setItem(key, json)
 }
 
-export { loadFromLocalStorage, saveToLocalStorage }
+const cleanLocalStorage = () => {
+  window.localStorage.removeItem(APP_KEY)
+}
+
+export { loadFromLocalStorage, saveToLocalStorage, cleanLocalStorage }
