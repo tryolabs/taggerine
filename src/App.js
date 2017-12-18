@@ -207,6 +207,17 @@ class App extends Component {
     }, this.saveState)
   }
 
+  removeCurrentTags = () => {
+    this.setState(prevState => {
+      const currentImage = getCurrentImage(prevState)
+      const tags = prevState.tags
+      delete tags[currentImage.name]
+      return {
+        tags: tags
+      }
+    })
+  }
+
   _changeCurrentImage = imageName => {
     this.setState(prevState => {
       let result = {}
@@ -390,6 +401,14 @@ class App extends Component {
           >
             Add Bounding Box
           </button>
+          <button
+            className="button second-button"
+            onClick={this.removeCurrentTags}
+            key={0}
+            disabled={!currentImageTags.length}
+          >
+            Remove Bounding Boxes
+          </button>
         </div>
         <div id="tags">
           <AutoSizer>
@@ -420,8 +439,8 @@ class App extends Component {
             <DownloadIcon /> Download Tags
           </a>
           <a
-            id="cleanTags"
-            className="button button-link"
+            id="clean-tags"
+            className="button button-link second-button"
             download="tags.json"
             onClick={this._cleanAllTags}
           >
