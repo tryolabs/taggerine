@@ -43,16 +43,16 @@ const getImageTagsAsList = (state, imageName) =>
     }))
 
 const getRecentTags = state => {
-  const recentTags = []
+  const recentTags = new Set()
   const currentImage = getCurrentImage(state)
   if (currentImage) {
     const tags = JSON.parse(JSON.stringify(state.tags))
     delete tags[currentImage.name]
     Object.values(tags).forEach(imageTagsObj => {
-      Object.values(imageTagsObj).forEach(tag => recentTags.push(tag))
+      Object.values(imageTagsObj).forEach(tag => recentTags.add(tag.name))
     })
   }
-  return recentTags
+  return Array.from(recentTags)
 }
 
 const isImageProcessed = (state, imageName) => {
@@ -75,7 +75,7 @@ class App extends Component {
     currentImageIndex: 0
   }
 
-  saveState = () => saveToLocalStorage(this.state)
+  saveState = () => saveToLocalStorage({...this.state, tagId})
 
   nextImage = () => {
     this.setState(prevState => {
@@ -114,7 +114,7 @@ class App extends Component {
       )
 
       return {
-        images: { ...prevState.images, ...newImages },
+        images: { ...prevState.images, ...newImages }
       }
     }, this.saveState)
   }
@@ -148,8 +148,9 @@ class App extends Component {
     }, this.saveState)
   }
 
-  repeatTag = tag => {
+  repeatTag = name => {
     const id = tagId
+    const newTag = { x: 0.14, y: 0.14, name: `tag${id}`, id, width: 0.14, height: 0.14 }
     tagId += 1
 
     this.setState(prevState => {
@@ -161,7 +162,7 @@ class App extends Component {
           ...prevState.tags,
           [currentImage.name]: {
             ...currentImageTags,
-            [id]: { ...tag, id }
+            [id]: { ...newTag, id, name }
           }
         }
       }
@@ -247,7 +248,7 @@ class App extends Component {
           defaultValue={tag.name}
           onChange={e => this.updateTag({ ...tag, name: e.target.value })}
         />
-        <button className="tag-button" onClick={() => this.repeatTag(tag)}>
+        <button className="tag-button" onClick={() => this.repeatTag(tag.name)}>
           {' '}
           <RepeatIcon />
         </button>
@@ -263,30 +264,39 @@ class App extends Component {
     const recentTagList = getRecentTags(this.state)
     const tag = recentTagList[index]
     return (
-      <div
-        className="recentTag list-item"
-        key={key}
-        style={style}
-        onClick={() => this.repeatTag(tag)}
-      >
-        {tag.name}
+      <div className="recentTag list-item" key={key} style={style}>
+        <a className="button button-link" onClick={() => this.repeatTag(tag)}>
+          {tag}
+        </a>
       </div>
     )
   }
 
   _generateDownloadFile = () => {
-    return JSON.stringify(this.state.tags)
+    const entries = Object.entries(this.state.tags)
+    const toDownload = entries.reduce(
+      (acc, [key, value]) => ({ ...acc, [key]: Object.values(value) }),
+      {}
+    )
+    return JSON.stringify(toDownload)
   }
 
   _cleanAllTags = e => {
-    this.setState({
-      tags : {}
-    }, this.saveState)
+    this.setState(
+      {
+        tags: {}
+      },
+      this.saveState
+    )
   }
 
   componentWillMount() {
-    const prevState = loadFromLocalStorage()
-    this.setState(prevState)
+    const loaded = loadFromLocalStorage()
+    if (loaded) {
+      tagId = loaded.tagId
+      delete loaded.tagId
+      this.setState(loaded)
+    }
   }
 
   render() {
@@ -362,12 +372,7 @@ class App extends Component {
           </AutoSizer>
         </div>
         <div id="tag-actions">
-          <button
-            className="button"
-            onClick={this.addTag}
-            key={0}
-            disabled={!imageNames.length}
-          >
+          <button className="button" onClick={this.addTag} key={0} disabled={!imageNames.length}>
             Add Bounding Box
           </button>
           <button
