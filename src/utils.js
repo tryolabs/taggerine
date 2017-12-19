@@ -108,8 +108,6 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
   if (width && height) {
     rect.width(width)
     rect.height(height)
-    group.width(width)
-    group.height(height)
   }
   onUpdate({ x, y, width, height })
 }
@@ -138,34 +136,6 @@ const createBoundingBox = (
   onDragEnd
 ) => {
   const group = new Konva.Group({ x, y, draggable: true, id, width, height })
-
-  group.on('dragmove', function(){
-    const layer = this.getLayer()
-    if (group.x() <  0) {
-      group.x(0)
-    }
-    if (group.y() <  0) {
-      group.y(0)
-    }
-    if (group.x()  + group.width() >  layer.width()) {
-      group.x(layer.width() - group.width())
-    }
-    if (group.y()  + group.height() >  layer.height()) {
-      group.y(layer.height() - group.height())
-    }
-
-  })
-
-  group.on('dragend', function() {
-    onDragEnd({
-      id,
-      name: text,
-      x: group.x(),
-      y: group.y(),
-      width: group.width(),
-      height: group.height()
-    })
-  })
 
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 
@@ -203,6 +173,7 @@ const createBoundingBox = (
       this.moveToTop()
     })
     anchor.on('dragend', function() {
+      console.log('ANCHO MUEVE MUEVE')
       const layer = this.getLayer()
       group.setDraggable(true)
       group.x(group.x() + rect.x())
@@ -213,11 +184,44 @@ const createBoundingBox = (
         name: text,
         x: group.x(),
         y: group.y(),
+        width: rect.width(),
+        height: rect.height()
+      })
+      layer.draw()
+    })
+  })
+
+  group.on('dragmove', function(){
+    const layer = this.getLayer()
+    if (group.x() <  0) {
+      group.x(0)
+    }
+    if (group.y() <  0) {
+      group.y(0)
+    }
+    if (group.x()  + group.width() >  layer.width()) {
+      group.x(layer.width() - group.width())
+    }
+    if (group.y()  + group.height() >  layer.height()) {
+      group.y(layer.height() - group.height())
+    }
+
+  })
+
+  group.on('dragend', function() {
+    if (rect.width() === group.width() || rect.height() === group.height()) {
+      console.log('GRUPO MUEVE MUEVE')
+      onDragEnd({
+        id,
+        name: text,
+        x: group.x(),
+        y: group.y(),
         width: group.width(),
         height: group.height()
       })
-    })
+    }
   })
+
   const label = createLabel({ text: text, color })
   group.add(label)
   group.label = label

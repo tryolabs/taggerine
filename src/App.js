@@ -75,7 +75,7 @@ class App extends Component {
     currentImageIndex: 0
   }
 
-  saveState = () => saveToLocalStorage({...this.state, tagId})
+  saveState = () => saveToLocalStorage({ ...this.state, tagId })
 
   nextImage = () => {
     this.setState(prevState => {
@@ -282,12 +282,10 @@ class App extends Component {
   }
 
   _cleanAllTags = e => {
-    this.setState(
-      {
-        tags: {}
-      },
-      this.saveState
-    )
+    this.setState(() => {
+      tagId = 0
+      return { tags: {} }
+    }, this.saveState)
   }
 
   componentWillMount() {
