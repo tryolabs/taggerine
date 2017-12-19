@@ -17,13 +17,14 @@ class Tagger extends React.Component {
       this._layer.add(boundingBox)
       this._boundingBoxes[id] = boundingBox
     })
+    this.rearrengeBoundingBoxes()
     this._layer.draw()
   }
 
   rearrengeBoundingBoxes = () => {
     const boundingBoxes = Object.values(this._boundingBoxes)
     boundingBoxes.sort((a, b) => {
-      return b.height() * b.width() - a.height() * a.width()
+      return (b.height() * b.width()) - (a.height() * a.width())
     })
     boundingBoxes.forEach((boundingBox, index) => {
       boundingBox.setZIndex(index + 1)
@@ -41,6 +42,7 @@ class Tagger extends React.Component {
     }
     this.props.updateTag(convertedObject)
   }
+
   addImage() {
     var img = new Image()
     img.onload = e => {
@@ -68,7 +70,6 @@ class Tagger extends React.Component {
       this._layer.add(this._image)
       this._image.setZIndex(0)
       this.addBoundingBoxes()
-      /*this._layer.draw()*/
     }
     img.src = this.props.image
   }
@@ -86,7 +87,6 @@ class Tagger extends React.Component {
     this.addImage()
 
     this._boundingBoxes = {}
-    /*this.addBoundingBoxes()*/
   }
 
   componentDidUpdate(prevProps) {
@@ -103,6 +103,7 @@ class Tagger extends React.Component {
       this.addImage()
     } else if (prevProps.tags !== this.props.tags) {
       Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
+      this._boundingBoxes = {}
       this.addBoundingBoxes()
     }
   }

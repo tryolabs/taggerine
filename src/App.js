@@ -121,7 +121,6 @@ class App extends Component {
 
   _changeCurrentImage = imageName => {
     this.setState(prevState => {
-      let result = {}
       const imageNames = getImageNames(prevState)
       return {
         currentImageIndex: imageNames.indexOf(imageName)
@@ -238,10 +237,11 @@ class App extends Component {
   }
 
   _tagListRowRenderer = ({ index, key, style }) => {
-    const tagList = getImageTagsAsList(this.state, getCurrentImage(this.state).name)
+    const imageName = getCurrentImage(this.state).name
+    const tagList = getImageTagsAsList(this.state, imageName)
     const tag = tagList[index]
     return (
-      <div className="tag-item" key={key} style={style}>
+      <div className="tag-item" key={`${imageName}-${key}`} style={style}>
         <input
           type="text"
           defaultValue={tag.name}
