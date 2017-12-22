@@ -4,8 +4,8 @@
   grid-template-rows: 110px 200px 100px 100px auto 50px;
   grid-template-areas:
     'header header header'
-    'uploader tagger recent-tags'
-    'uploaded-list tagger recent-tags'
+    'uploader tagger top-right-side-panel'
+    'uploaded-list tagger top-right-side-panel'
     'uploaded-list tagger tag-actions'
     'uploaded-list tagger tags'
     'footer footer footer';
@@ -31,7 +31,7 @@
 
   display: flex;
   align-items: center;
-
+  justify-content: space-between;
   background-color: #222;
   color: white;
 
@@ -88,12 +88,19 @@
 }
 
 #recent-tags {
-  gird-area: recent-tags;
+  grid-area: top-right-side-panel;
 
   padding: 20px;
   min-height: 300px;
 }
 
+#settings {
+  grid-area: top-right-side-panel;
+
+  padding: 20px;
+  min-height: 300px;
+
+}
 #tags {
   grid-area: tags;
 
@@ -132,9 +139,10 @@
   text-align: right;
 }
 
-.recent-tag-list {
+.inner-top-right-pannel {
   border: solid 2px black;
   border-radius: 5px;
+  height: 100%;
 }
 
 .tag-list {
@@ -155,16 +163,8 @@
 }
 
 .button-link {
-  font: bold 15px Arial;
-  text-decoration: none;
-  background-color: #eeeeee;
   color: #333333;
-  padding: 2px 6px 2px 6px;
-  border-top: 1px solid #cccccc;
-  border-right: 1px solid #333333;
-  border-bottom: 1px solid #333333;
-  border-left: 1px solid #cccccc;
-  border-radius: 10px 10px;
+  cursor: pointer;
 }
 
 .recentTag {
@@ -206,4 +206,39 @@
 
 .second-button {
   margin-left: 12px;
+}
+
+#header button {
+  background-color: transparent;
+  border: 0;
+}
+
+#settings-container {
+  background-color: lightgrey;
+}
+
+#settings-header {
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.radio {
+  padding-top: 5px;
+  padding-left: 10px;
+}
+
+.slider-container {
+  padding-top: 5px;
+  width: 80%;
+  padding-left: 5%;
+}
+
+#bounding-box-size {
+  padding-top: 20px;
+}
+
+#height-container {
+  padding-top: 10px;
 }

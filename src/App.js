@@ -11,10 +11,24 @@ import DownloadIcon from 'react-icons/lib/fa/download'
 import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
 import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
 import CheckIcon from 'react-icons/lib/fa/check'
+import CogIcon from 'react-icons/lib/fa/cog'
+import Slider, { createSliderWithTooltip } from 'rc-slider'
 
 import './App.css'
+import 'rc-slider/assets/index.css'
+
+
+const DEFAULT_HEIGHT = 0.14
+const DEFAULT_WIDTH = 0.14
+const DEFAULT_TAG_VALUE = 'xywh'
 
 let tagId = 0
+
+function percentFormatter(v) {
+  return `${v} %`
+}
+
+const SliderWithTooltip = createSliderWithTooltip(Slider)
 
 const getImageNames = state => {
   return Object.keys(state.images).sort((aImg, bImg) => {
@@ -72,7 +86,11 @@ class App extends Component {
   state = {
     images: {},
     tags: {},
-    currentImageIndex: 0
+    currentImageIndex: 0,
+    showSettings: false,
+    tagFormat: 'xywh',
+    bbWidth: 0.14,
+    bbHeight: 0.14
   }
 
   saveState = () => saveToLocalStorage({ ...this.state, tagId })
@@ -135,7 +153,14 @@ class App extends Component {
     this.setState(prevState => {
       const currentImage = getCurrentImage(prevState)
       const currentImageTags = getImageTags(prevState, currentImage.name)
-      const newTag = { x: 0.14, y: 0.14, name: `tag${id}`, id, width: 0.14, height: 0.14 }
+      const newTag = {
+        x: 0.14,
+        y: 0.14,
+        name: `tag${id}`,
+        id,
+        width: this.state.bbWidth,
+        height: this.state.bbHeight
+      }
       return {
         tags: {
           ...prevState.tags,
@@ -150,7 +175,14 @@ class App extends Component {
 
   repeatTag = name => {
     const id = tagId
-    const newTag = { x: 0.14, y: 0.14, name: `tag${id}`, id, width: 0.14, height: 0.14 }
+    const newTag = {
+      x: 0.14,
+      y: 0.14,
+      name: `tag${id}`,
+      id,
+      width: this.state.bbWidth,
+      height: this.state.bbHeight
+    }
     tagId += 1
 
     this.setState(prevState => {
@@ -274,10 +306,16 @@ class App extends Component {
 
   _generateDownloadFile = () => {
     const entries = Object.entries(this.state.tags)
-    const toDownload = entries.reduce(
-      (acc, [key, value]) => ({ ...acc, [key]: Object.values(value) }),
-      {}
-    )
+      const toDownload = entries.reduce(
+            (acc, [key, value]) => { 
+              let values = Object.values(value)
+              if (this.state.tagFormat !== 'xywh') {
+                values = values.map( ({x, y, width, height, id, name}) => ({x_min: x, y_min: y, x_max: x + width, y_max: y + height, id, name}))
+              }
+              return ({...acc, [key]: values})
+            },
+            {}
+          )
     return JSON.stringify(toDownload)
   }
 
@@ -286,6 +324,32 @@ class App extends Component {
       tagId = 0
       return { tags: {} }
     }, this.saveState)
+  }
+
+  handleTagFormatChange = changeEvent => {
+    this.setState({
+      tagFormat: changeEvent.target.value
+    })
+  }
+
+  handleWidthBBChange = value => {
+    this.setState({
+      bbWidth: value / 100
+    })
+  }
+
+  handleHeightBBChange = value => {
+    this.setState({
+      bbHeight: value / 100
+    })
+  }
+
+  resetSettings = () => {
+    this.setState({
+      bbHeight: DEFAULT_HEIGHT,
+      bbWidth: DEFAULT_WIDTH,
+      tagFormat: DEFAULT_TAG_VALUE
+    })
   }
 
   componentWillMount() {
@@ -307,6 +371,11 @@ class App extends Component {
       <div className="App">
         <header id="header">
           <h1 className="title">{'\uD83C\uDF4A'} Taggerine</h1>
+          <button
+            onClick={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}
+          >
+            <CogIcon size={24} color="white" />
+          </button>
         </header>
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
@@ -353,22 +422,93 @@ class App extends Component {
             )}
           </AutoSizer>
         </div>
-        <div id="recent-tags">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                overscanRowCount={10}
-                noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
-                rowCount={recentTags.length}
-                rowHeight={50}
-                rowRenderer={this._recentTagListRowRenderer}
-                width={width}
-                height={height}
-                className="recent-tag-list"
-              />
-            )}
-          </AutoSizer>
-        </div>
+        {!this.state.showSettings && (
+          <div id="recent-tags">
+            <AutoSizer>
+              {({ width, height }) => (
+                <List
+                  overscanRowCount={10}
+                  noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
+                  rowCount={recentTags.length}
+                  rowHeight={50}
+                  rowRenderer={this._recentTagListRowRenderer}
+                  width={width}
+                  height={height}
+                  className="inner-top-right-pannel"
+                />
+              )}
+            </AutoSizer>
+          </div>
+        )}
+        {this.state.showSettings && (
+          <div id="settings">
+            <div id="settings-container" className="inner-top-right-pannel">
+              <div id="settings-header">Settings</div>
+              <div id="settings-content">
+                <div id="tag-format">
+                  <span>Select you tag format for download: </span>
+                  <div className="radio">
+                    <label>
+                      <input
+                        type="radio"
+                        value="xywh"
+                        onChange={this.handleTagFormatChange}
+                        checked={this.state.tagFormat === 'xywh'}
+                      />
+                      (x_min, y_min, width, height)
+                    </label>
+                  </div>
+                  <div className="radio">
+                    <label>
+                      <input
+                        type="radio"
+                        value="xyxy"
+                        onChange={this.handleTagFormatChange}
+                        checked={this.state.tagFormat === 'xyxy'}
+                      />
+                      (x_min, y_min, x_max, y_max)
+                    </label>
+                  </div>
+                </div>
+                <div id="bounding-box-size">
+                  <div id="width-container">
+                    <span>Bounding box width:</span>
+                    <div className="slider-container">
+                      <SliderWithTooltip
+                        value={this.state.bbWidth * 100}
+                        tipFormatter={percentFormatter}
+                        onChange={this.handleWidthBBChange}
+                      />
+                    </div>
+                  </div>
+                  <div id="height-container">
+                    <span>Bounding box height:</span>
+                    <div className="slider-container">
+                      <SliderWithTooltip
+                        value={this.state.bbHeight * 100}
+                        tipFormatter={percentFormatter}
+                        onChange={this.handleHeightBBChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div id="bounding-box-buttons">
+                  <button className="button" onClick={this.resetSettings}>
+                    Reset
+                  </button>
+                  <button
+                    className="button second-button"
+                    onClick={() =>
+                      this.setState(prevState => ({ showSettings: !prevState.showSettings }))
+                    }
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div id="tag-actions">
           <button className="button" onClick={this.addTag} key={0} disabled={!imageNames.length}>
             Add Bounding Box

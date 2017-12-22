@@ -139,7 +139,16 @@ const createBoundingBox = (
 
   const { stroke, strokeWidth, opacity } = BOUNDING_BOX_DEFAULTS
 
-  const rect =new Konva.Rect({ x: 0, y: 0, width, height, stroke, strokeWidth, fill: color, opacity })
+  const rect = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width,
+    height,
+    stroke,
+    strokeWidth,
+    fill: color,
+    opacity
+  })
   group.add(rect)
 
   const topLeft = createAnchor({ x: 0, y: 0, name: ANCHOR_NAMES.topLeft })
@@ -153,17 +162,17 @@ const createBoundingBox = (
 
     anchor.on('dragmove', function() {
       const layer = this.getLayer()
-      if (anchor.x() < -(group.x())){
-        anchor.x(-(group.x()))
+      if (anchor.x() < -group.x()) {
+        anchor.x(-group.x())
       }
-      if (anchor.x() + group.x() > layer.width()){
-        anchor.x(layer.width()-group.x())
+      if (anchor.x() + group.x() > layer.width()) {
+        anchor.x(layer.width() - group.x())
       }
-      if (anchor.y() < -(group.y())){
-        anchor.y(-(group.y()))
+      if (anchor.y() < -group.y()) {
+        anchor.y(-group.y())
       }
-      if (anchor.y() + group.y() > layer.height()){
-        anchor.y(layer.height()-group.y())
+      if (anchor.y() + group.y() > layer.height()) {
+        anchor.y(layer.height() - group.y())
       }
       updateBoundingBox(this, onDragMove)
       layer.draw()
@@ -173,7 +182,6 @@ const createBoundingBox = (
       this.moveToTop()
     })
     anchor.on('dragend', function() {
-      console.log('ANCHO MUEVE MUEVE')
       const layer = this.getLayer()
       group.setDraggable(true)
       group.x(group.x() + rect.x())
@@ -191,26 +199,24 @@ const createBoundingBox = (
     })
   })
 
-  group.on('dragmove', function(){
+  group.on('dragmove', function() {
     const layer = this.getLayer()
-    if (group.x() <  0) {
+    if (group.x() < 0) {
       group.x(0)
     }
-    if (group.y() <  0) {
+    if (group.y() < 0) {
       group.y(0)
     }
-    if (group.x()  + group.width() >  layer.width()) {
+    if (group.x() + group.width() > layer.width()) {
       group.x(layer.width() - group.width())
     }
-    if (group.y()  + group.height() >  layer.height()) {
+    if (group.y() + group.height() > layer.height()) {
       group.y(layer.height() - group.height())
     }
-
   })
 
   group.on('dragend', function() {
     if (rect.width() === group.width() || rect.height() === group.height()) {
-      console.log('GRUPO MUEVE MUEVE')
       onDragEnd({
         id,
         name: text,
