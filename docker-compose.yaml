@@ -1,5 +1,17 @@
 version: "2"
+
 services:
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/api.docker
+    ports:
+      - 5000:5000
+    volumes:
+      - ./api:/api
+    env_file:
+      - deploy/api.env
 
   frontend:
     build:
@@ -11,3 +23,5 @@ services:
     volumes:
       - ./frontend:/src/app
       - /src/app/node_modules
+    env_file:
+      - deploy/frontend.env

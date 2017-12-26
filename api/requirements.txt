@@ -1,0 +1,5 @@
+Flask
+Flask-Compress
+Flask-Cors
+Flask-RESTful
+uwsgi
