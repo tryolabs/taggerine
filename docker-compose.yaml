@@ -1,0 +1,37 @@
+version: "2"
+
+volumes:
+  database:
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/api.docker
+    ports:
+      - 5000:5000
+    links:
+      - postgres
+    volumes:
+      - ./api:/api
+    env_file:
+      - deploy/api.env
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/frontend.docker
+    command: npm start
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend:/src/app
+      - /src/app/node_modules
+    env_file:
+      - deploy/frontend.env
+
+  postgres:
+    image: postgres
+    volumes:
+      - database:/var/lib/postgresql/data/
