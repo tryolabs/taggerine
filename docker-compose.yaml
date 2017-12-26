@@ -1,0 +1,13 @@
+version: "2"
+services:
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/frontend.docker
+    command: npm start
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend:/src/app
+      - /src/app/node_modules
