@@ -5,6 +5,7 @@ import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
 import Tagger from './Tagger'
 import ImageUploader from './ImageUploader'
+import UploadTags from './UploadTags'
 import TrashIcon from 'react-icons/lib/fa/trash'
 import RepeatIcon from 'react-icons/lib/fa/repeat'
 import DownloadIcon from 'react-icons/lib/fa/download'
@@ -16,7 +17,6 @@ import Slider, { createSliderWithTooltip } from 'rc-slider'
 
 import './App.css'
 import 'rc-slider/assets/index.css'
-
 
 const DEFAULT_HEIGHT = 0.14
 const DEFAULT_WIDTH = 0.14
@@ -60,7 +60,7 @@ const getRecentTags = state => {
   const recentTags = new Set()
   const currentImage = getCurrentImage(state)
   if (currentImage) {
-    const tags = JSON.parse(JSON.stringify(state.tags))
+    const tags =  { ...state.tags }
     delete tags[currentImage.name]
     Object.values(tags).forEach(imageTagsObj => {
       Object.values(imageTagsObj).forEach(tag => recentTags.add(tag.name))
@@ -135,6 +135,52 @@ class App extends Component {
         images: { ...prevState.images, ...newImages }
       }
     }, this.saveState)
+  }
+
+  uploadTags = tagFile => {
+    let tags = { ...this.state.tags }
+    let newTags = {}
+    let reader = new FileReader()
+    reader.onload = e => {
+      let data = JSON.parse(e.target.result)
+      let entries = Object.entries(data)
+      newTags = entries.reduce((acc, [key, value]) => {
+        if (key in acc) {
+          value.forEach(bbox => {
+            let obj = Object.values(acc[key]).find(obj => {
+              return (
+                obj.x === bbox.x &&
+                obj.y === bbox.y &&
+                obj.name === bbox.label &&
+                obj.width === bbox.width &&
+                obj.height === bbox.height
+              )
+            })
+            if (!obj) {
+              let id = tagId
+              tagId += 1
+              bbox['id'] = id
+              bbox['name'] = bbox['label']
+              delete bbox['label']
+              acc[key][id] = bbox
+            }
+          })
+        } else {
+          acc[key] = {}
+          value.forEach(bbox => {
+            let id = tagId
+            tagId += 1
+            bbox['id'] = id
+            bbox['name'] = bbox['label']
+            delete bbox['label']
+            acc[key][id] = bbox
+          })
+        }
+        return acc
+      }, tags)
+      this.setState({ tags: newTags }, this.saveState)
+    }
+    reader.readAsText(tagFile)
   }
 
   _changeCurrentImage = imageName => {
@@ -306,16 +352,28 @@ class App extends Component {
 
   _generateDownloadFile = () => {
     const entries = Object.entries(this.state.tags)
-      const toDownload = entries.reduce(
-            (acc, [key, value]) => { 
-              let values = Object.values(value)
-              if (this.state.tagFormat !== 'xywh') {
-                values = values.map( ({x, y, width, height, id, name}) => ({x_min: x, y_min: y, x_max: x + width, y_max: y + height, id, name}))
-              }
-              return ({...acc, [key]: values})
-            },
-            {}
-          )
+    const toDownload = entries.reduce((acc, [key, value]) => {
+      let values = Object.values(value)
+      let data
+      if (this.state.tagFormat !== 'xywh') {
+        data = values.map(({ x, y, width, height, id, name }) => ({
+          x_min: x,
+          y_min: y,
+          x_max: x + width,
+          y_max: y + height,
+          label: name
+        }))
+      } else {
+        data = values.map(({ x, y, width, height, id, name }) => ({
+          x,
+          y,
+          width,
+          height,
+          label: name
+        }))
+      }
+      return { ...acc, [key]: data }
+    }, {})
     return JSON.stringify(toDownload)
   }
 
@@ -455,7 +513,7 @@ class App extends Component {
                         onChange={this.handleTagFormatChange}
                         checked={this.state.tagFormat === 'xywh'}
                       />
-                      (x_min, y_min, width, height)
+                      (x, y, width, height)
                     </label>
                   </div>
                   <div className="radio">
@@ -550,6 +608,7 @@ class App extends Component {
           >
             <DownloadIcon /> Download Tags
           </a>
+          <UploadTags uploadTags={this.uploadTags} />
           <a
             id="clean-tags"
             className="button button-link second-button"
