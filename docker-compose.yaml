@@ -1,5 +1,8 @@
 version: "2"
 
+volumes:
+  database:
+
 services:
 
   api:
@@ -8,6 +11,8 @@ services:
       dockerfile: deploy/api.docker
     ports:
       - 5000:5000
+    links:
+      - postgres
     volumes:
       - ./api:/api
     env_file:
@@ -25,3 +30,8 @@ services:
       - /src/app/node_modules
     env_file:
       - deploy/frontend.env
+
+  postgres:
+    image: postgres
+    volumes:
+      - database:/var/lib/postgresql/data/

@@ -1,5 +1,13 @@
 FROM python:3.6
 
+# Install dependencies for psycopg2.
+RUN apt-get update && \
+    apt-get install -y \
+        libpq-dev \
+        locales \
+        python3-dev && \
+    apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*
+
 # Make sure we use latest pip.
 RUN pip install --upgrade pip
 

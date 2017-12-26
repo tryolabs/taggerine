@@ -2,4 +2,7 @@ Flask
 Flask-Compress
 Flask-Cors
 Flask-RESTful
+marshmallow
+psycopg2
 uwsgi
+sqlalchemy
