@@ -17,6 +17,7 @@ class UploadTags extends React.Component {
         onChange={this.onFilesChange}
         onError={this.onFilesError}
         accepts={['application/json']}
+        multiple={false}
         clickable
       >
         Upload tags

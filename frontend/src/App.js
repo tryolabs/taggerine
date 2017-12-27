@@ -21,6 +21,7 @@ import 'rc-slider/assets/index.css'
 const DEFAULT_HEIGHT = 0.14
 const DEFAULT_WIDTH = 0.14
 const DEFAULT_TAG_VALUE = 'xywh'
+const PRECISION_ERROR = '0.000001'
 
 let tagId = 0
 
@@ -137,6 +138,92 @@ class App extends Component {
     }, this.saveState)
   }
 
+  _tagFormat = newTags => {
+    let result = 'empty'
+    if ((newTags.length > 0) && ('x' in newTags[0])) {
+      result = 'xywh'
+    } else if ((newTags.length > 0) && ('x_min' in newTags[0])) {
+      result = 'xyxy'
+    }
+    return result
+  }
+
+  _addXYWHTags = (tags, fileName, newTags) => {
+    if (fileName in tags) {
+      newTags.forEach(bbox => {
+        let obj = Object.values(tags[fileName]).find(obj => {
+          return (
+            obj.x === bbox.x &&
+            obj.y === bbox.y &&
+            obj.name === bbox.label &&
+            obj.width === bbox.width &&
+            obj.height === bbox.height
+          )
+        })
+        if (!obj) {
+          let id = tagId
+          tagId += 1
+          bbox.id = id
+          bbox.name = bbox.label
+          delete bbox.label
+          tags[fileName][id] = bbox
+        }
+      })
+    } else {
+      tags[fileName] = {}
+      newTags.forEach(bbox => {
+        let id = tagId
+        tagId += 1
+        bbox.id = id
+        bbox.name = bbox.label
+        delete bbox.label
+        tags[fileName][id] = bbox
+      })
+    }
+  }
+  _XYXYFormatToXYWH = (id, bbox) => {
+    tagId += 1
+    bbox.id = id
+    bbox.name = bbox.label
+    bbox.x = bbox.x_min
+    bbox.y = bbox.y_min
+    bbox.width = bbox.x_max - bbox.x_min
+    bbox.height = bbox.y_max - bbox.y_min
+    delete bbox.label
+    delete bbox.x_min
+    delete bbox.y_min
+    delete bbox.y_max
+    delete bbox.y_min
+  }
+
+  _addXYXYTags = (tags, fileName, newTags) => {
+    if (fileName in tags) {
+      newTags.forEach(bbox => {
+        let obj = Object.values(tags[fileName]).find(obj => {
+          return (
+            obj.x === bbox.x_min &&
+            obj.y === bbox.y_min &&
+            obj.name === bbox.label &&
+            Math.abs((bbox.x_max - bbox.x_min) - obj.width) < PRECISION_ERROR &&
+            Math.abs((bbox.y_max - bbox.y_min) - obj.height) < PRECISION_ERROR
+          )
+        })
+        if (!obj) {
+          let id = tagId
+          this._XYXYFormatToXYWH(id, bbox)
+          tags[fileName][id] = bbox
+        }
+      })
+    } else {
+      tags[fileName] = {}
+      newTags.forEach(bbox => {
+        let id = tagId
+        this._XYXYFormatToXYWH(id, bbox)
+        tags[fileName][id] = bbox
+      })
+    }
+  }
+
   uploadTags = tagFile => {
     let tags = { ...this.state.tags }
     let newTags = {}
@@ -145,36 +232,10 @@ class App extends Component {
       let data = JSON.parse(e.target.result)
       let entries = Object.entries(data)
       newTags = entries.reduce((acc, [key, value]) => {
-        if (key in acc) {
-          value.forEach(bbox => {
-            let obj = Object.values(acc[key]).find(obj => {
-              return (
-                obj.x === bbox.x &&
-                obj.y === bbox.y &&
-                obj.name === bbox.label &&
-                obj.width === bbox.width &&
-                obj.height === bbox.height
-              )
-            })
-            if (!obj) {
-              let id = tagId
-              tagId += 1
-              bbox['id'] = id
-              bbox['name'] = bbox['label']
-              delete bbox['label']
-              acc[key][id] = bbox
-            }
-          })
+        if (this._tagFormat(value) === 'xywh') {
+          this._addXYWHTags(acc, key, value)
         } else {
-          acc[key] = {}
-          value.forEach(bbox => {
-            let id = tagId
-            tagId += 1
-            bbox['id'] = id
-            bbox['name'] = bbox['label']
-            delete bbox['label']
-            acc[key][id] = bbox
-          })
+          this._addXYXYTags(acc, key, value)
         }
         return acc
       }, tags)
