@@ -1,15 +1,18 @@
 FROM node:6.3.1
 
+# install yarn
+RUN npm i -g yarn
+
 # Create app directory
 RUN mkdir -p /src/app
 WORKDIR /src/app
 
 # Install app dependencies
 COPY frontend/package.json /src/app/
-RUN npm install
+RUN yarn 
 
 # Bundle app source
 COPY frontend /src/app
 
 # defined in package.json
-CMD [ "npm", "run", "start:server" ]
+CMD [ "yarn", "start"]
