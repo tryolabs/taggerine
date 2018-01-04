@@ -1,0 +1,244 @@
+.Project {
+  display: grid;
+  grid-template-columns: 20% 60% 20%;
+  grid-template-rows: 110px 200px 100px 100px auto 50px;
+  grid-template-areas:
+    'header header header'
+    'uploader tagger top-right-side-panel'
+    'uploaded-list tagger top-right-side-panel'
+    'uploaded-list tagger tag-actions'
+    'uploaded-list tagger tags'
+    'footer footer footer';
+
+  justify-content: stretch;
+
+  height: 100%;
+
+  padding-bottom: 10px;
+
+  font-family: 'sans-serif';
+}
+
+#tag-actions {
+  grid-area: tag-actions;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#header {
+  grid-area: header;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #222;
+  color: white;
+
+  padding: 20px;
+}
+
+#footer {
+  grid-area: footer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #222;
+  color: white;
+}
+
+.title {
+  font-size: 2em;
+}
+
+#tagger {
+  grid-area: tagger;
+
+  width: 100%;
+
+  padding: 20px 0;
+}
+
+.autosized-tagger {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.autosized-tagger button {
+  align-self: stretch;
+}
+
+#uploader {
+  grid-area: uploader;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 20px;
+}
+
+#uploaded-list {
+  grid-area: uploaded-list;
+
+  padding: 0 20px 20px 20px;
+}
+
+#recent-tags {
+  grid-area: top-right-side-panel;
+
+  padding: 20px;
+  min-height: 300px;
+}
+
+#settings {
+  grid-area: top-right-side-panel;
+
+  padding: 20px;
+  min-height: 300px;
+
+}
+#tags {
+  grid-area: tags;
+
+  padding: 0 20px 20px 20px;
+}
+
+.image-list {
+  border: solid 2px black;
+  border-radius: 5px;
+}
+
+.list-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.arrow {
+  margin-right: 10px;
+}
+
+.image-list-empty {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+
+  text-align: center;
+
+  height: 100%;
+}
+
+.image-counter {
+  text-align: right;
+}
+
+.inner-top-right-pannel {
+  border: solid 2px black;
+  border-radius: 5px;
+  height: 100%;
+}
+
+.tag-list {
+  border: solid 2px black;
+  border-radius: 5px;
+}
+
+.button {
+  font: bold 15px Arial;
+  text-decoration: none;
+  background-color: #eeeeee;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #cccccc;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #cccccc;
+  border-radius: 10px 10px;
+}
+
+.button-link {
+  color: #333333;
+  cursor: pointer;
+}
+
+.recentTag {
+  cursor: pointer;
+}
+
+.tag-item {
+  padding: 10px;
+}
+
+.tag-button {
+  margin-left: 5px;
+}
+
+.thumbnail {
+  border: 1px solid #ddd; /* Gray border */
+  border-radius: 4px; /* Rounded border */
+  padding: 5px; /* Some padding */
+  height: 100px; /* Set a small width */
+  width: 100px;
+}
+
+.thumbnail:hover {
+  box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+
+.selected-image-row {
+  background-color: rgba(108, 177, 49, 0.5);
+}
+
+.image-item-name {
+  margin-left: 12px;
+}
+
+.image-item {
+  display: flex;
+  align-items: center;
+}
+
+.second-button {
+  margin-left: 12px;
+}
+
+#header button {
+  background-color: transparent;
+  border: 0;
+}
+
+#settings-container {
+  background-color: lightgrey;
+}
+
+#settings-header {
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.radio {
+  padding-top: 5px;
+  padding-left: 10px;
+}
+
+.slider-container {
+  padding-top: 5px;
+  width: 80%;
+  padding-left: 5%;
+}
+
+#bounding-box-size {
+  padding-top: 20px;
+}
+
+#height-container {
+  padding-top: 10px;
+}
