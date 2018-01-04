@@ -6,3 +6,5 @@ marshmallow
 psycopg2
 uwsgi
 sqlalchemy
+flask-apispec
+Pillow
