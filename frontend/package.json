@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "d3-scale": "^1.0.7",
+    "fetch": "^1.1.0",
     "konva": "^1.7.6",
     "rc-slider": "^8.5.0",
     "react": "^16.2.0",
@@ -11,6 +12,7 @@
     "react-files": "^2.4.3",
     "react-icons": "^2.2.7",
     "react-konva": "^1.6.4",
+    "react-router-dom": "^4.2.2",
     "react-scripts": "1.0.17",
     "react-virtualized": "^9.13.0"
   },

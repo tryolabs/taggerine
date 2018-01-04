@@ -9,6 +9,7 @@ WORKDIR /src/app
 
 # Install app dependencies
 COPY frontend/package.json /src/app/
+COPY frontend/yarn.lock /src/app/
 RUN yarn 
 
 # Bundle app source
