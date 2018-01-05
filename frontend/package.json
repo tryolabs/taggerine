@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "axios": "^0.17.1",
     "d3-scale": "^1.0.7",
-    "fetch": "^1.1.0",
     "konva": "^1.7.6",
     "rc-slider": "^8.5.0",
     "react": "^16.2.0",

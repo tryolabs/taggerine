@@ -14,6 +14,7 @@ import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
 import CheckIcon from 'react-icons/lib/fa/check'
 import CogIcon from 'react-icons/lib/fa/cog'
 import Slider, { createSliderWithTooltip } from 'rc-slider'
+import axios from 'axios'
 
 import './Project.css'
 
@@ -25,23 +26,22 @@ const API_URL = process.env.REACT_APP_API_URL
 
 let tagId = 0
 
+function getImageUrl(projectId, imageName) {
+  return `${API_URL}/projects/${projectId}/images/${imageName}`
+}
+
+function getThumbnailUrl(projectId, imageName) {
+  return `${API_URL}/projects/${projectId}/images/thumbnail/${imageName}`
+}
+
 function percentFormatter(v) {
   return `${v} %`
 }
 
 const SliderWithTooltip = createSliderWithTooltip(Slider)
 
-const getImageNames = state => {
-  return Object.keys(state.images).sort((aImg, bImg) => {
-    return aImg.localeCompare(bImg)
-  })
-}
-
 const getCurrentImage = state => {
-  const imageNames = getImageNames(state)
-  const currentImage = imageNames.length
-    ? state.images[imageNames[state.currentImageIndex]]
-    : undefined
+  const currentImage = state.images.length ? state.images[state.currentImageIndex] : undefined
   return currentImage
 }
 
@@ -62,7 +62,7 @@ const getRecentTags = state => {
   const currentImage = getCurrentImage(state)
   if (currentImage) {
     const tags = { ...state.tags }
-    delete tags[currentImage.name]
+    delete tags[currentImage]
     Object.values(tags).forEach(imageTagsObj => {
       Object.values(imageTagsObj).forEach(tag => recentTags.add(tag.name))
     })
@@ -85,7 +85,8 @@ const countTaggedImages = state => {
 
 class Project extends Component {
   state = {
-    images: {},
+    images: [],
+    totalImages: 0,
     tags: {},
     currentImageIndex: 0,
     showSettings: false,
@@ -98,9 +99,10 @@ class Project extends Component {
 
   nextImage = () => {
     this.setState(prevState => {
-      const imageNames = getImageNames(prevState)
       const currentImageIndex =
-        imageNames.length > prevState.currentImageIndex + 1 ? prevState.currentImageIndex + 1 : 0
+        prevState.images.length > prevState.currentImageIndex + 1
+          ? prevState.currentImageIndex + 1
+          : 0
       return {
         currentImageIndex: currentImageIndex
       }
@@ -109,9 +111,10 @@ class Project extends Component {
 
   prevImage = () => {
     this.setState(prevState => {
-      const imageNames = getImageNames(prevState)
       const currentImageIndex =
-        prevState.currentImageIndex > 0 ? prevState.currentImageIndex - 1 : imageNames.length - 1
+        prevState.currentImageIndex > 0
+          ? prevState.currentImageIndex - 1
+          : prevState.images.length - 1
       return {
         currentImageIndex: currentImageIndex
       }
@@ -119,23 +122,26 @@ class Project extends Component {
   }
 
   uploadImages = images => {
-    this.setState(prevState => {
-      const newImages = images.reduce(
-        (files, file) => ({
-          ...files,
-          [file.name]: {
-            name: file.name,
-            extension: file.extension,
-            url: file.preview.url
-          }
-        }),
-        {}
-      )
+    let data = new FormData()
+    const batchLimit = 100
 
-      return {
-        images: { ...prevState.images, ...newImages }
+    const config = {
+      headers: { 'content-type': 'multipart/form-data' }
+    }
+
+    for (var i = 0; i < images.length; i++) {
+      let file = images[i]
+      data.append('file[' + i + ']', file, file.name)
+      if (i % batchLimit === 0 && i > 0) {
+        axios
+          .post(`${API_URL}/projects/${this.props.match.params.project_id}/images`, data, config)
+          .then(this.getImages)
+        data = new FormData()
       }
-    }, this.saveState)
+    }
+    axios
+      .post(`${API_URL}/projects/${this.props.match.params.project_id}/images`, data, config)
+      .then(this.getImages)
   }
 
   _tagFormat = newTags => {
@@ -181,6 +187,7 @@ class Project extends Component {
       })
     }
   }
+
   _XYXYFormatToXYWH = (id, bbox) => {
     tagId += 1
     bbox.id = id
@@ -246,9 +253,8 @@ class Project extends Component {
 
   _changeCurrentImage = imageName => {
     this.setState(prevState => {
-      const imageNames = getImageNames(prevState)
       return {
-        currentImageIndex: imageNames.indexOf(imageName)
+        currentImageIndex: prevState.images.indexOf(imageName)
       }
     })
   }
@@ -271,7 +277,7 @@ class Project extends Component {
       return {
         tags: {
           ...prevState.tags,
-          [currentImage.name]: {
+          [currentImage]: {
             ...currentImageTags,
             [id]: newTag
           }
@@ -294,12 +300,12 @@ class Project extends Component {
 
     this.setState(prevState => {
       const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage.name)
+      const currentImageTags = getImageTags(prevState, currentImage)
 
       return {
         tags: {
           ...prevState.tags,
-          [currentImage.name]: {
+          [currentImage]: {
             ...currentImageTags,
             [id]: { ...newTag, id, name }
           }
@@ -311,12 +317,12 @@ class Project extends Component {
   updateTag = tag => {
     this.setState(prevState => {
       const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage.name)
+      const currentImageTags = getImageTags(prevState, currentImage)
 
       return {
         tags: {
           ...prevState.tags,
-          [currentImage.name]: { ...currentImageTags, [tag.id]: tag }
+          [currentImage]: { ...currentImageTags, [tag.id]: tag }
         }
       }
     }, this.saveState)
@@ -325,14 +331,14 @@ class Project extends Component {
   removeTag = id => {
     this.setState(prevState => {
       const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage.name)
+      const currentImageTags = getImageTags(prevState, currentImage)
 
       delete currentImageTags[id]
 
       return {
         tags: {
           ...prevState.tags,
-          [currentImage.name]: { ...currentImageTags }
+          [currentImage]: { ...currentImageTags }
         }
       }
     }, this.saveState)
@@ -342,7 +348,7 @@ class Project extends Component {
     this.setState(prevState => {
       const currentImage = getCurrentImage(prevState)
       const tags = prevState.tags
-      delete tags[currentImage.name]
+      delete tags[currentImage]
       return {
         tags: tags
       }
@@ -350,12 +356,10 @@ class Project extends Component {
   }
 
   _uploadedListRowRenderer = ({ index, key, style }) => {
-    const imageNames = getImageNames(this.state)
-    const imageName = imageNames[index]
+    const imageName = this.state.images[index]
     const currentImage = getCurrentImage(this.state)
-    const isCurrentImage = imageName === currentImage.name
+    const isCurrentImage = imageName === currentImage
     const isProcessed = isImageProcessed(this.state, imageName)
-    const image = this.state.images[imageName]
     return (
       <div key={key} style={style}>
         <div
@@ -363,7 +367,11 @@ class Project extends Component {
           onClick={() => this._changeCurrentImage(imageName)}
         >
           <div className="image-item">
-            <img className="thumbnail" src={image.url} alt={imageName} />
+            <img
+              className="thumbnail"
+              src={getThumbnailUrl(this.props.match.params.project_id, imageName)}
+              alt={imageName}
+            />
             <span className="image-item-name">{imageName}</span>
           </div>
           {isProcessed ? (
@@ -377,7 +385,7 @@ class Project extends Component {
   }
 
   _tagListRowRenderer = ({ index, key, style }) => {
-    const imageName = getCurrentImage(this.state).name
+    const imageName = getCurrentImage(this.state)
     const tagList = getImageTagsAsList(this.state, imageName)
     const tag = tagList[index]
     return (
@@ -463,6 +471,20 @@ class Project extends Component {
     })
   }
 
+  getImages = () => {
+    const projectId = this.props.match.params.project_id
+    return axios.get(`${API_URL}/projects/${projectId}/images`).then(response => {
+      this.setState(prevState => {
+        const images = [...new Set([...prevState.images, ...response.data.images])]
+        const imageNames = images.sort((aImg, bImg) => {
+          return aImg.localeCompare(bImg)
+        })
+        return { 
+          images: imageNames,
+          totalImages:  response.data.total_images}
+      })
+    })
+  }
   resetSettings = () => {
     this.setState({
       bbHeight: DEFAULT_HEIGHT,
@@ -481,15 +503,26 @@ class Project extends Component {
   }
 
   componentDidMount() {
-    const projectId = this.props.match.params.project_id
-    console.log(projectId)
+    this.getImages().then(() => {
+      let intervalId = setInterval(() => {
+        if (this.state.totalImages > this.state.images.length) {
+          this.getImages()
+          console.log('ejecuta')
+        } else {
+          clearInterval(intervalId)
+          intervalId = null
+          console.log('termino')
+        }
+      }, 3000)
+    })
   }
 
   render() {
+    const projectId = this.props.match.params.project_id
     const currentImage = getCurrentImage(this.state)
-    const currentImageTags = currentImage ? getImageTagsAsList(this.state, currentImage.name) : []
+    const currentImageTags = currentImage ? getImageTagsAsList(this.state, currentImage) : []
     const recentTags = getRecentTags(this.state)
-    const imageNames = getImageNames(this.state)
+    const imageNames = this.state.images
 
     return (
       <div className="Project">
@@ -504,7 +537,7 @@ class Project extends Component {
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
           <span className="image-counter">
-            {countTaggedImages(this.state)}/{Object.keys(this.state.images).length} images
+            {countTaggedImages(this.state)}/{this.state.images.length} images
           </span>
         </div>
         <div id="uploaded-list">
@@ -513,7 +546,7 @@ class Project extends Component {
               <List
                 overscanRowCount={10}
                 noRowsRenderer={() => <div className="image-list-empty">No files</div>}
-                rowCount={Object.keys(this.state.images).length}
+                rowCount={this.state.images.length}
                 rowHeight={130}
                 rowRenderer={this._uploadedListRowRenderer}
                 width={width}
@@ -532,7 +565,7 @@ class Project extends Component {
                 </button>
                 {currentImage && (
                   <Tagger
-                    image={currentImage.url}
+                    image={getImageUrl(projectId, currentImage)}
                     tags={currentImageTags}
                     updateTag={this.updateTag}
                     width={width - 60}

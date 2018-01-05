@@ -3,20 +3,10 @@ import Files from 'react-files'
 
 import './ImageUploader.css'
 
-class ImageUploader extends React.Component {
-  onFilesChange = files => {
-    this.props.uploadImages(files)
-  }
-
-  onFilesError = (error, file) => {
-    console.log('error code ' + error.code + ': ' + error.message)
-  }
-
-  render() {
-    return (
+const ImageUploader = props => (
       <Files
-        onChange={this.onFilesChange}
-        onError={this.onFilesError}
+        onChange={files => props.uploadImages(files)}
+        onError={(error, file) => console.log('error code ' + error.code + ': ' + error.message)}
         accepts={['image/png', 'image/jpeg']}
         multiple
         minFileSize={0}
@@ -24,8 +14,6 @@ class ImageUploader extends React.Component {
       >
         Drop files here or click to upload
       </Files>
-    )
-  }
-}
+)
 
 export default ImageUploader
