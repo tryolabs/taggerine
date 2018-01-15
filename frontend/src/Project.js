@@ -16,7 +16,10 @@ import CogIcon from 'react-icons/lib/fa/cog'
 import Slider, { createSliderWithTooltip } from 'rc-slider'
 import axios from 'axios'
 
-import './Project.css'
+// Material-ui
+import Grid from 'material-ui/Grid';
+
+//import './Project.css'
 
 const DEFAULT_HEIGHT = 0.14
 const DEFAULT_WIDTH = 0.14
@@ -525,198 +528,228 @@ class Project extends Component {
     const imageNames = this.state.images
 
     return (
-      <div className="Project">
-        <header id="header">
-          <h1 className="title">{'\uD83C\uDF4A'} Taggerine</h1>
-          <button
-            onClick={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}
-          >
-            <CogIcon size={24} color="white" />
-          </button>
-        </header>
-        <div id="uploader">
-          <ImageUploader uploadImages={this.uploadImages} />
-          <span className="image-counter">
-            {countTaggedImages(this.state)}/{this.state.images.length} images
-          </span>
-        </div>
-        <div id="uploaded-list">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                overscanRowCount={10}
-                noRowsRenderer={() => <div className="image-list-empty">No files</div>}
-                rowCount={this.state.images.length}
-                rowHeight={130}
-                rowRenderer={this._uploadedListRowRenderer}
-                width={width}
-                height={height}
-                className="image-list"
-              />
-            )}
-          </AutoSizer>
-        </div>
-        <div id="tagger">
-          <AutoSizer>
-            {({ width, height }) => (
-              <div style={{ width, height }} className="autosized-tagger">
-                <button onClick={this.prevImage} disabled={imageNames.length <= 1}>
-                  <ArrowLeftIcon />
-                </button>
-                {currentImage && (
-                  <Tagger
-                    image={getImageUrl(projectId, currentImage)}
-                    tags={currentImageTags}
-                    updateTag={this.updateTag}
-                    width={width - 60}
-                    height={height}
-                  />
-                )}
-                <button onClick={this.nextImage} disabled={imageNames.length <= 1}>
-                  <ArrowRightIcon />
-                </button>
-              </div>
-            )}
-          </AutoSizer>
-        </div>
-        {!this.state.showSettings && (
-          <div id="recent-tags">
-            <AutoSizer>
-              {({ width, height }) => (
-                <List
-                  overscanRowCount={10}
-                  noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
-                  rowCount={recentTags.length}
-                  rowHeight={50}
-                  rowRenderer={this._recentTagListRowRenderer}
-                  width={width}
-                  height={height}
-                  className="inner-top-right-pannel"
-                />
+      <Grid container className="Project">
+        <Grid item xs={12}>
+          <Grid container>
+            <Grid item>
+              <h1 className="title">{'\uD83C\uDF4A'} Taggerine</h1>
+            </Grid>
+            <Grid item>
+              <button
+                onClick={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}
+              >
+                <CogIcon size={24} color="white" />
+              </button>
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container id="Content" justify="center" spacing={16}>
+            <Grid item key="right-panel" xs={3} id="right-panel">
+              <Grid container>
+                <Grid item>
+                  <ImageUploader uploadImages={this.uploadImages} />
+                </Grid>
+                <Grid item>
+                  <span className="image-counter">
+                    {countTaggedImages(this.state)}/{this.state.images.length} images
+                  </span>
+                </Grid>
+                <Grid item>
+                  <AutoSizer>
+                    {({ width, height }) => (
+                      <List
+                        overscanRowCount={10}
+                        noRowsRenderer={() => <div className="image-list-empty">No files</div>}
+                        rowCount={this.state.images.length}
+                        rowHeight={130}
+                        rowRenderer={this._uploadedListRowRenderer}
+                        width={width}
+                        height={height}
+                        className="image-list"
+                      />
+                    )}
+                  </AutoSizer>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item key="tagger" xs={6} id="tagger">
+              <Grid container>
+                <Grid item>
+                  <AutoSizer>
+                    {({ width, height }) => (
+                      <div style={{ width, height }} className="autosized-tagger">
+                        <button onClick={this.prevImage} disabled={imageNames.length <= 1}>
+                          <ArrowLeftIcon />
+                        </button>
+                        {currentImage && (
+                          <Tagger
+                            image={getImageUrl(projectId, currentImage)}
+                            tags={currentImageTags}
+                            updateTag={this.updateTag}
+                            width={width - 60}
+                            height={height}
+                          />
+                        )}
+                        <button onClick={this.nextImage} disabled={imageNames.length <= 1}>
+                          <ArrowRightIcon />
+                        </button>
+                      </div>
+                    )}
+                  </AutoSizer>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item key="left-panel" xs={3} id="left-panel">
+              {!this.state.showSettings && (
+                <div id="recent-tags">
+                  <AutoSizer>
+                    {({ width, height }) => (
+                      <List
+                        overscanRowCount={10}
+                        noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
+                        rowCount={recentTags.length}
+                        rowHeight={50}
+                        rowRenderer={this._recentTagListRowRenderer}
+                        width={width}
+                        height={height}
+                        className="inner-top-right-pannel"
+                      />
+                    )}
+                  </AutoSizer>
+                </div>
               )}
-            </AutoSizer>
-          </div>
-        )}
-        {this.state.showSettings && (
-          <div id="settings">
-            <div id="settings-container" className="inner-top-right-pannel">
-              <div id="settings-header">Settings</div>
-              <div id="settings-content">
-                <div id="tag-format">
-                  <span>Select you tag format for download: </span>
-                  <div className="radio">
-                    <label>
-                      <input
-                        type="radio"
-                        value="xywh"
-                        onChange={this.handleTagFormatChange}
-                        checked={this.state.tagFormat === 'xywh'}
-                      />
-                      (x, y, width, height)
-                    </label>
-                  </div>
-                  <div className="radio">
-                    <label>
-                      <input
-                        type="radio"
-                        value="xyxy"
-                        onChange={this.handleTagFormatChange}
-                        checked={this.state.tagFormat === 'xyxy'}
-                      />
-                      (x_min, y_min, x_max, y_max)
-                    </label>
-                  </div>
-                </div>
-                <div id="bounding-box-size">
-                  <div id="width-container">
-                    <span>Bounding box width:</span>
-                    <div className="slider-container">
-                      <SliderWithTooltip
-                        value={this.state.bbWidth * 100}
-                        tipFormatter={percentFormatter}
-                        onChange={this.handleWidthBBChange}
-                      />
+              {this.state.showSettings && (
+                <div id="settings">
+                  <div id="settings-container" className="inner-top-right-pannel">
+                    <div id="settings-header">Settings</div>
+                    <div id="settings-content">
+                      <div id="tag-format">
+                        <span>Select you tag format for download: </span>
+                        <div className="radio">
+                          <label>
+                            <input
+                              type="radio"
+                              value="xywh"
+                              onChange={this.handleTagFormatChange}
+                              checked={this.state.tagFormat === 'xywh'}
+                            />
+                            (x, y, width, height)
+                          </label>
+                        </div>
+                        <div className="radio">
+                          <label>
+                            <input
+                              type="radio"
+                              value="xyxy"
+                              onChange={this.handleTagFormatChange}
+                              checked={this.state.tagFormat === 'xyxy'}
+                            />
+                            (x_min, y_min, x_max, y_max)
+                          </label>
+                        </div>
+                      </div>
+                      <div id="bounding-box-size">
+                        <div id="width-container">
+                          <span>Bounding box width:</span>
+                          <div className="slider-container">
+                            <SliderWithTooltip
+                              value={this.state.bbWidth * 100}
+                              tipFormatter={percentFormatter}
+                              onChange={this.handleWidthBBChange}
+                            />
+                          </div>
+                        </div>
+                        <div id="height-container">
+                          <span>Bounding box height:</span>
+                          <div className="slider-container">
+                            <SliderWithTooltip
+                              value={this.state.bbHeight * 100}
+                              tipFormatter={percentFormatter}
+                              onChange={this.handleHeightBBChange}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div id="bounding-box-buttons">
+                        <button className="button" onClick={this.resetSettings}>
+                          Reset
+                        </button>
+                        <button
+                          className="button second-button"
+                          onClick={() =>
+                            this.setState(prevState => ({ showSettings: !prevState.showSettings }))
+                          }
+                        >
+                          Done
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div id="height-container">
-                    <span>Bounding box height:</span>
-                    <div className="slider-container">
-                      <SliderWithTooltip
-                        value={this.state.bbHeight * 100}
-                        tipFormatter={percentFormatter}
-                        onChange={this.handleHeightBBChange}
-                      />
-                    </div>
-                  </div>
                 </div>
-                <div id="bounding-box-buttons">
-                  <button className="button" onClick={this.resetSettings}>
-                    Reset
-                  </button>
-                  <button
-                    className="button second-button"
-                    onClick={() =>
-                      this.setState(prevState => ({ showSettings: !prevState.showSettings }))
-                    }
-                  >
-                    Done
-                  </button>
-                </div>
+              )}
+              <div id="tag-actions">
+                <button className="button" onClick={this.addTag} key={0} disabled={!imageNames.length}>
+                  Add Bounding Box
+                </button>
+                <button
+                  className="button second-button"
+                  onClick={this.removeCurrentTags}
+                  key={1}
+                  disabled={!currentImageTags.length}
+                >
+                  <TrashIcon /> Remove Bounding Boxes
+                </button>
               </div>
-            </div>
-          </div>
-        )}
-        <div id="tag-actions">
-          <button className="button" onClick={this.addTag} key={0} disabled={!imageNames.length}>
-            Add Bounding Box
-          </button>
-          <button
-            className="button second-button"
-            onClick={this.removeCurrentTags}
-            key={1}
-            disabled={!currentImageTags.length}
-          >
-            <TrashIcon /> Remove Bounding Boxes
-          </button>
-        </div>
-        <div id="tags">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                key={2}
-                overscanRowCount={10}
-                noRowsRenderer={() => <div className="tag-list-empty">No tags</div>}
-                rowCount={currentImageTags.length}
-                rowHeight={50}
-                rowRenderer={this._tagListRowRenderer}
-                width={width}
-                height={height}
-                className="tag-list"
-              />
-            )}
-          </AutoSizer>
-        </div>
-        <footer id="footer">
-          <a
-            id="download"
-            className="button button-link"
-            download="tags.json"
-            href={`data:application/json;charset=utf-8,${encodeURIComponent(
-              this._generateDownloadFile()
-            )}`}
-          >
-            <DownloadIcon /> Download Tags
-          </a>
-          <UploadTags uploadTags={this.uploadTags} />
-          <a
-            id="clean-tags"
-            className="button button-link second-button"
-            onClick={this._cleanAllTags}
-          >
-            <TrashIcon /> Clean tags
-          </a>
-        </footer>
-      </div>
+              <div id="tags">
+                <AutoSizer>
+                  {({ width, height }) => (
+                    <List
+                      key={2}
+                      overscanRowCount={10}
+                      noRowsRenderer={() => <div className="tag-list-empty">No tags</div>}
+                      rowCount={currentImageTags.length}
+                      rowHeight={50}
+                      rowRenderer={this._tagListRowRenderer}
+                      width={width}
+                      height={height}
+                      className="tag-list"
+                    />
+                  )}
+                </AutoSizer>
+              </div>
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container>
+            <Grid item>
+              <a
+                id="download"
+                className="button button-link"
+                download="tags.json"
+                href={`data:application/json;charset=utf-8,${encodeURIComponent(
+                  this._generateDownloadFile()
+                )}`}
+              >
+                <DownloadIcon /> Download Tags
+              </a>
+            </Grid>
+            <Grid item>
+              <UploadTags uploadTags={this.uploadTags} />
+            </Grid>
+            <Grid item>
+              <a
+                id="clean-tags"
+                className="button button-link second-button"
+                onClick={this._cleanAllTags}
+              >
+                <TrashIcon /> Clean tags
+              </a>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
     )
   }
 }
