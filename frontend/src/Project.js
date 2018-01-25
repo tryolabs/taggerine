@@ -12,11 +12,11 @@ import DownloadIcon from 'react-icons/lib/fa/download'
 import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
 import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
 import CheckIcon from 'react-icons/lib/fa/check'
-import CogIcon from 'react-icons/lib/fa/cog'
 import Slider, { createSliderWithTooltip } from 'rc-slider'
 import axios from 'axios'
 
 import './Project.css'
+import Header from './Header'
 
 const DEFAULT_HEIGHT = 0.14
 const DEFAULT_WIDTH = 0.14
@@ -479,7 +479,7 @@ class Project extends Component {
         const imageNames = images.sort((aImg, bImg) => {
           return aImg.localeCompare(bImg)
         })
-        return { 
+        return {
           images: imageNames,
           totalImages:  response.data.total_images}
       })
@@ -526,14 +526,7 @@ class Project extends Component {
 
     return (
       <div className="Project">
-        <header id="header">
-          <h1 className="title">{'\uD83C\uDF4A'} Taggerine</h1>
-          <button
-            onClick={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}
-          >
-            <CogIcon size={24} color="white" />
-          </button>
-        </header>
+        <Header settingsSelected={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}/>
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
           <span className="image-counter">
