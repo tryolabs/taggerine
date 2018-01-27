@@ -1,70 +1,106 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import CogIcon from 'react-icons/lib/fa/cog'
 import AppBar from 'material-ui/AppBar'
 import Toolbar from 'material-ui/Toolbar'
 import Typography from 'material-ui/Typography'
+import DeleteIcon from 'material-ui-icons/DeleteForever'
+import ImportExportIcon from 'material-ui-icons/ImportExport'
+import UploadIcon from 'material-ui-icons/FileUpload'
+import SettingsIcon from 'material-ui-icons/Settings'
 import Button from 'material-ui/Button'
-import Menu, { MenuItem } from 'material-ui/Menu'
 import { withStyles } from 'material-ui/styles'
+
+import {
+  DialogContent,
+  DialogContentText,
+} from 'material-ui/Dialog'
+
+import DialogHelper from './DialogHelper'
 import icon from './icon.png'
 
-const menuStyles = theme => ({
-  separator: {
-    marginLeft: 16,
-    fontSize: 14,
-    color: theme.palette.text.secondary,
-  },
+const DialogType = Object.freeze({
+  None: 0,
+  DeleteTags: 1,
+  ImportExport: 2,
+  UploadImage: 3,
+  Settings: 4
 })
 
-class _ProjectMenuButton extends React.Component {
-  state = {
-    anchorElement: null,
-  }
+const Upload = ({ visibleDialog, showDialog, onClose }) =>
+  <div>
+    <Button dense color="inherit" onClick={showDialog(DialogType.UploadImage)}>
+      <UploadIcon />
+    </Button>
+    <DialogHelper
+      open={visibleDialog === DialogType.UploadImage}
+      title="Upload images"
+      allowCancel
+      onConfirm={() => onClose(true)}
+      onCancel={() => onClose(false)}
+    >
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Select one or many images and continue
+        </DialogContentText>
+      </DialogContent>
+    </DialogHelper>
+  </div>
 
-  handleClick = event => this.setState({ anchorElement: event.currentTarget })
-  handleClose = () => this.setState({ anchorElement: null })
+const ImportExport = ({ visibleDialog, showDialog, onClose }) =>
+  <div>
+    <Button dense color="inherit" onClick={showDialog(DialogType.ImportExport)}>
+      <ImportExportIcon />
+    </Button>
+    <DialogHelper
+      open={visibleDialog === DialogType.ImportExport}
+      title="Import / Export"
+      onConfirm={() => onClose('')}
+    >
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          This probably is going to desappear
+        </DialogContentText>
+      </DialogContent>
+    </DialogHelper>
+  </div>
 
-  render() {
-    const { classes } = this.props
-    const anchor = this.state.anchorElement
-    const ownership = anchor ? 'project-menu' : null
+const Delete = ({ visibleDialog, showDialog, onClose }) =>
+  <div>
+    <Button dense color="inherit" onClick={showDialog(DialogType.Delete)}>
+      <DeleteIcon />
+    </Button>
+    <DialogHelper
+      open={visibleDialog === DialogType.Delete}
+      title="Delete all tags"
+      allowCancel
+      onConfirm={() => onClose(true)}
+      onCancel={() => onClose(false)}
+    >
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Are you shure that you want to delete all the tags? This can't be undo
+        </DialogContentText>
+      </DialogContent>
+    </DialogHelper>
+  </div>
 
-    return (
-      <div>
-        <Button
-          aria-owns={ownership}
-          aria-haspopup="true"
-          onClick={this.handleClick}
-        >
-          <CogIcon size={24} color="white" />
-        </Button>
-        <Menu
-          id="project-menu"
-          anchorEl={anchor}
-          open={Boolean(anchor)}
-          onClose={this.handleClose}
-        >
-          <MenuItem onClick={this.handleClose}>Upload Images</MenuItem>
-          <Typography className={classes.separator}>Tags</Typography>
-          <MenuItem onClick={this.handleClose}>Import</MenuItem>
-          <MenuItem onClick={this.handleClose}>Export</MenuItem>
-          <MenuItem onClick={this.handleClose}>Clear all</MenuItem>
-        </Menu>
-      </div>
-    )
-  }
-}
-
-_ProjectMenuButton.propTypes = {
-  classes: PropTypes.object.isRequired,
-  onUploadImage: PropTypes.func,
-  onImportTags: PropTypes.func,
-  onExportTags: PropTypes.func,
-  onClearAllTags: PropTypes.func,
-}
-
-const ProjectMenuButton = withStyles(menuStyles)(_ProjectMenuButton)
+const Settings = ({ visibleDialog, showDialog, onClose }) =>
+  <div>
+    <Button dense color="inherit" onClick={showDialog(DialogType.Settings)}>
+      <SettingsIcon />
+    </Button>
+    <DialogHelper
+      open={visibleDialog === DialogType.Settings}
+      title="Settings"
+      onConfirm={() => onClose(true)}
+    >
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Here will go the project settings...
+        </DialogContentText>
+      </DialogContent>
+    </DialogHelper>
+  </div>
 
 const headerStyles = {
   icon: {
@@ -73,24 +109,97 @@ const headerStyles = {
     paddingRight: 20,
   },
   title: {
-    flex: 1,
+    fontFamily: 'Rubik',
+    letterSpacing: 3,
+    color: "inherit",
+  },
+  projectName: {
+    flex: 0.9,
+    color: 'lightgrey',
+    fontStyle: 'italic',
   },
   toolbar: {
-     height: 10,
+     height: 0,
   },
 };
 
-const Header = ({ classes, settingsSelected }) =>
-  <AppBar>
-    <Toolbar style={headerStyles.toolbar}>
-      <img src={icon} alt="" style={headerStyles.icon}/>
-      <Typography type="title" color="inherit" className={classes.title}>
-        Taggerine
-      </Typography>
-      <ProjectMenuButton />
-    </Toolbar>
-  </AppBar>
+class Header extends React.Component {
+  state = {
+    dialogType: DialogType.None,
+  }
 
-Header.propTypes = ProjectMenuButton.propTypes
+  showDialog = dialog => () => this.setState({ dialogType: dialog })
+  closeDialog = () => this.setState({ dialogType: DialogType.None })
+
+  handleUploadImages = shouldUpload => {
+    if (shouldUpload)
+      this.props.onUploadImage()
+    this.closeDialog()
+  }
+
+  handleImportExport = action => {
+    if (action === 'import')
+      this.props.onImportTags()
+    else if (action === 'export') {
+      this.props.onExportTags()
+    }
+    this.closeDialog()
+  }
+
+  handleDelete = shouldDelete => {
+    if (shouldDelete)
+      this.props.onDelete()
+    this.closeDialog()
+  }
+
+  handleSettingsChange = shouldUpdate => {
+    if (shouldUpdate)
+      this.props.onSettingsChange()
+    this.closeDialog()
+  }
+
+  render() {
+    const dialogType = this.state.dialogType
+    return (
+      <div>
+        <AppBar>
+          <Toolbar style={headerStyles.toolbar}>
+            <img src={icon} alt="" style={headerStyles.icon}/>
+            <Typography type="title" className={this.props.classes.title}>
+              TAGGERINE
+            </Typography>
+            <div style={{ flex: 0.1 }}/>
+            <Typography type="subheading" className={this.props.classes.projectName}>
+              / Awesome project
+            </Typography>
+            <Upload
+              visibleDialog={dialogType}
+              showDialog={this.showDialog}
+              onClose={this.handleUploadImages} />
+            <ImportExport
+              visibleDialog={dialogType}
+              showDialog={this.showDialog}
+              onClose={this.handleImportExport} />
+            <Delete
+              visibleDialog={dialogType}
+              showDialog={this.showDialog}
+              onClose={this.handleDelete} />
+            <Settings
+              visibleDialog={dialogType}
+              showDialog={this.showDialog}
+              onClose={_ => this.closeDialog()} />
+          </Toolbar>
+        </AppBar>
+      </div>
+    )
+  }
+}
+
+Header.propTypes = {
+  onUploadImage: PropTypes.func.isRequired,
+  onImportTags: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onSettingsChange: PropTypes.func.isRequired,
+}
 
 export default withStyles(headerStyles)(Header)
