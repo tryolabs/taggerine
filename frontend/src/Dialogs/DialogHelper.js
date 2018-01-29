@@ -5,24 +5,32 @@ import Button from 'material-ui/Button'
 import Dialog, {
   DialogActions,
   DialogTitle,
+  DialogContent,
+  DialogContentText,
 } from 'material-ui/Dialog'
 
-const DialogHelper = ({ children, open, title, allowCancel, onConfirm, onCancel }) =>
+const DialogHelper = ({ children, open, title, message, onConfirm, onCancel }) =>
   <Dialog
     open={open}
     aria-labelledby="alert-dialog-title"
     aria-describedby="alert-dialog-description"
   >
     <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-    {children}
+    {children ||
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          {message}
+        </DialogContentText>
+      </DialogContent>
+    }
     <DialogActions>
-      {Boolean(allowCancel) &&
+      {Boolean(onCancel) &&
         <Button onClick={onCancel} color="primary">
           Cancel
         </Button>
       }
       <Button onClick={onConfirm} color="primary">
-        {Boolean(allowCancel) ? "Ok" : "Close"}
+        {Boolean(onCancel) ? "Ok" : "Close"}
       </Button>
     </DialogActions>
   </Dialog>
