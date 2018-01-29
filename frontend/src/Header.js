@@ -10,12 +10,14 @@ import SettingsIcon from 'material-ui-icons/Settings'
 import Button from 'material-ui/Button'
 import { withStyles } from 'material-ui/styles'
 
+import UploadImages from './Dialogs/UploadImages'
+
 import {
   DialogContent,
   DialogContentText,
 } from 'material-ui/Dialog'
 
-import DialogHelper from './DialogHelper'
+import DialogHelper from './Dialogs/DialogHelper'
 import icon from './icon.png'
 
 const DialogType = Object.freeze({
@@ -31,19 +33,10 @@ const Upload = ({ visibleDialog, showDialog, onClose }) =>
     <Button dense color="inherit" onClick={showDialog(DialogType.UploadImage)}>
       <UploadIcon />
     </Button>
-    <DialogHelper
+    <UploadImages
       open={visibleDialog === DialogType.UploadImage}
-      title="Upload images"
-      allowCancel
-      onConfirm={() => onClose(true)}
-      onCancel={() => onClose(false)}
-    >
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          Select one or many images and continue
-        </DialogContentText>
-      </DialogContent>
-    </DialogHelper>
+      onDismiss={onClose}
+    />
   </div>
 
 const ImportExport = ({ visibleDialog, showDialog, onClose }) =>
@@ -111,7 +104,7 @@ const headerStyles = {
   title: {
     fontFamily: 'Rubik',
     letterSpacing: 3,
-    color: "inherit",
+    color: 'inherit',
   },
   projectName: {
     flex: 0.9,
