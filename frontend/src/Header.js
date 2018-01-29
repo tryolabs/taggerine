@@ -17,6 +17,7 @@ import {
 import DialogHelper from './Dialogs/DialogHelper'
 import ImportExportDialog from './Dialogs/ImportExport'
 import UploadImagesDialog from './Dialogs/UploadImagesDialog'
+import ProjectSettingsDialog from './Dialogs/ProjectSettingsDialog'
 
 import icon from './icon.png'
 

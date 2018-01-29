@@ -13,7 +13,7 @@ import ExpandMoreIcon from 'material-ui-icons/ExpandMore'
 
 
 /*
-ImportExport: show a dialog to import or export tags. The 'onDismiss' callback
+ImportExportDialog: show a dialog to import or export tags. The 'onDismiss' callback
 could receive three types of input:
 
 - A File object to import tags from
