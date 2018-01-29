@@ -5,8 +5,11 @@ import { DialogContent } from 'material-ui/Dialog'
 import DialogHelper from './DialogHelper'
 
 /*
-UploadImages: show dialog to upload images. the 'onDismiss' callback is called
-with a list of files or with no value if the dialog is cancel
+UploadImages: show dialog to upload images. The 'onDismiss' callback
+could receive two types of input:
+
+- An array of File objects representing the images to upload.
+- No value if the dialog is canceled.
 */
 
 const initialState = {
@@ -33,7 +36,7 @@ class UploadImages extends React.Component {
     this.setState({ uploadSize, selectedFiles })
   }
 
-  onConfirm = shouldUpload => {
+  onConfirm = shouldUpload => () => {
     if (shouldUpload && this.state.selectedFiles)
       this.props.onDismiss(this.state.selectedFiles)
     else
@@ -52,8 +55,8 @@ class UploadImages extends React.Component {
         open={this.props.open}
         title="Upload images"
         allowCancel
-        onConfirm={() => this.onConfirm(true)}
-        onCancel={() => this.onConfirm(false)}
+        onConfirm={this.onConfirm(true)}
+        onCancel={this.onConfirm(false)}
       >
         <DialogContent style={{ paddingBottom: 0 }}>
           <input
