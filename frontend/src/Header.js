@@ -9,15 +9,15 @@ import UploadIcon from 'material-ui-icons/FileUpload'
 import SettingsIcon from 'material-ui-icons/Settings'
 import Button from 'material-ui/Button'
 import { withStyles } from 'material-ui/styles'
-
-import UploadImages from './Dialogs/UploadImages'
-
 import {
   DialogContent,
   DialogContentText,
 } from 'material-ui/Dialog'
 
 import DialogHelper from './Dialogs/DialogHelper'
+import ImportExportDialog from './Dialogs/ImportExport'
+import UploadImages from './Dialogs/UploadImages'
+
 import icon from './icon.png'
 
 const DialogType = Object.freeze({
@@ -44,17 +44,10 @@ const ImportExport = ({ visibleDialog, showDialog, onClose }) =>
     <Button dense color="inherit" onClick={showDialog(DialogType.ImportExport)}>
       <ImportExportIcon />
     </Button>
-    <DialogHelper
+    <ImportExportDialog
       open={visibleDialog === DialogType.ImportExport}
-      title="Import / Export"
-      onConfirm={() => onClose('')}
-    >
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          This probably is going to desappear
-        </DialogContentText>
-      </DialogContent>
-    </DialogHelper>
+      onDismiss={onClose}
+    />
   </div>
 
 const Delete = ({ visibleDialog, showDialog, onClose }) =>
