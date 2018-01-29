@@ -17,7 +17,7 @@ const initialState = {
   uploadSize: null,
 }
 
-class UploadImages extends React.Component {
+class UploadImagesDialog extends React.Component {
   state = initialState
 
   onFilesSelected = event => {
@@ -76,9 +76,9 @@ class UploadImages extends React.Component {
   }
 }
 
-UploadImages.propTypes = {
+UploadImagesDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onDismiss: PropTypes.func.isRequired,
 }
 
-export default UploadImages
+export default UploadImagesDialog

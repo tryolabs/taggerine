@@ -16,7 +16,7 @@ import {
 
 import DialogHelper from './Dialogs/DialogHelper'
 import ImportExportDialog from './Dialogs/ImportExport'
-import UploadImages from './Dialogs/UploadImages'
+import UploadImagesDialog from './Dialogs/UploadImagesDialog'
 
 import icon from './icon.png'
 
@@ -28,12 +28,12 @@ const DialogType = Object.freeze({
   Settings: 4
 })
 
-const Upload = ({ visibleDialog, showDialog, onClose }) =>
+const UploadImages = ({ visibleDialog, showDialog, onClose }) =>
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.UploadImage)}>
       <UploadIcon />
     </Button>
-    <UploadImages
+    <UploadImagesDialog
       open={visibleDialog === DialogType.UploadImage}
       onDismiss={onClose}
     />
@@ -158,7 +158,7 @@ class Header extends React.Component {
             <Typography type="subheading" className={this.props.classes.projectName}>
               / Awesome project
             </Typography>
-            <Upload
+            <UploadImages
               visibleDialog={dialogType}
               showDialog={this.showDialog}
               onClose={this.handleUploadImages} />
