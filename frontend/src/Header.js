@@ -102,17 +102,19 @@ class Header extends React.Component {
   showDialog = dialog => () => this.setState({ dialogType: dialog })
   closeDialog = () => this.setState({ dialogType: DialogType.None })
 
-  handleUploadImages = shouldUpload => {
-    if (shouldUpload)
-      this.props.onUploadImage()
+  handleUploadImages = files => {
+    if (Boolean(files))
+      this.props.onUploadImage(files)
     this.closeDialog()
   }
 
-  handleImportExport = action => {
-    if (action === 'import')
-      this.props.onImportTags()
-    else if (action === 'export') {
-      this.props.onExportTags()
+  handleImportExport = param => {
+    if (typeof(param) === 'string')
+      //param has the selected export format
+      this.props.onExportTags(param)
+    else if (typeof(param) === 'object') {
+      //param is a file to import the tags from
+      this.props.onImportTags(param)
     }
     this.closeDialog()
   }
@@ -167,6 +169,7 @@ class Header extends React.Component {
 Header.propTypes = {
   onUploadImage: PropTypes.func.isRequired,
   onImportTags: PropTypes.func.isRequired,
+  onExportTags: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onSettingsChange: PropTypes.func.isRequired,
 }

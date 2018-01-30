@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { AutoSizer, List } from 'react-virtualized'
 
+import saveAs from 'js-file-download'
 import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
 import Tagger from './Tagger'
@@ -251,6 +252,34 @@ class Project extends Component {
     reader.readAsText(tagFile)
   }
 
+  downloadTags = format => {
+    const entries = Object.entries(this.state.tags)
+    const toDownload = entries.reduce((acc, [key, value]) => {
+      let values = Object.values(value)
+      let data
+      if (format.toUpperCase() !== 'XYWH') {
+        data = values.map(({ x, y, width, height, id, name }) => ({
+          x_min: x,
+          y_min: y,
+          x_max: x + width,
+          y_max: y + height,
+          label: name
+        }))
+      } else {
+        data = values.map(({ x, y, width, height, id, name }) => ({
+          x,
+          y,
+          width,
+          height,
+          label: name
+        }))
+      }
+      return { ...acc, [key]: data }
+    }, {})
+    const content = JSON.stringify(toDownload)
+    saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
+  }
+
   _changeCurrentImage = imageName => {
     this.setState(prevState => {
       return {
@@ -419,34 +448,7 @@ class Project extends Component {
     )
   }
 
-  _generateDownloadFile = () => {
-    const entries = Object.entries(this.state.tags)
-    const toDownload = entries.reduce((acc, [key, value]) => {
-      let values = Object.values(value)
-      let data
-      if (this.state.tagFormat !== 'xywh') {
-        data = values.map(({ x, y, width, height, id, name }) => ({
-          x_min: x,
-          y_min: y,
-          x_max: x + width,
-          y_max: y + height,
-          label: name
-        }))
-      } else {
-        data = values.map(({ x, y, width, height, id, name }) => ({
-          x,
-          y,
-          width,
-          height,
-          label: name
-        }))
-      }
-      return { ...acc, [key]: data }
-    }, {})
-    return JSON.stringify(toDownload)
-  }
-
-  _cleanAllTags = e => {
+  cleanAllTags = e => {
     this.setState(() => {
       tagId = 0
       return { tags: {} }
@@ -526,7 +528,12 @@ class Project extends Component {
 
     return (
       <div className="Project">
-        <Header settingsSelected={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}/>
+        <Header
+          onUploadImage={this.uploadImages}
+          onImportTags={this.uploadTags}
+          onExportTags={this.downloadTags}
+          onDelete={this.cleanAllTags}
+        />
         <div id="uploader">
           <ImageUploader uploadImages={this.uploadImages} />
           <span className="image-counter">
@@ -694,9 +701,9 @@ class Project extends Component {
             id="download"
             className="button button-link"
             download="tags.json"
-            href={`data:application/json;charset=utf-8,${encodeURIComponent(
-              this._generateDownloadFile()
-            )}`}
+            // href={`data:application/json;charset=utf-8,${encodeURIComponent(
+            //   this._generateDownloadFile()
+            // )}`}
           >
             <DownloadIcon /> Download Tags
           </a>
