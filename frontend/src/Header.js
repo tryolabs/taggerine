@@ -28,7 +28,7 @@ const DialogType = Object.freeze({
 const UploadImages = ({ visibleDialog, showDialog, onClose }) =>
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.UploadImage)}>
-      <UploadIcon />
+      <UploadIcon color='primary'/>
     </Button>
     <UploadImagesDialog
       open={visibleDialog === DialogType.UploadImage}
@@ -39,7 +39,7 @@ const UploadImages = ({ visibleDialog, showDialog, onClose }) =>
 const ImportExport = ({ visibleDialog, showDialog, onClose }) =>
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.ImportExport)}>
-      <ImportExportIcon />
+      <ImportExportIcon color='primary'/>
     </Button>
     <ImportExportDialog
       open={visibleDialog === DialogType.ImportExport}
@@ -50,7 +50,7 @@ const ImportExport = ({ visibleDialog, showDialog, onClose }) =>
 const Delete = ({ visibleDialog, showDialog, onClose }) =>
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.Delete)}>
-      <DeleteIcon />
+      <DeleteIcon color='primary'/>
     </Button>
     <DialogHelper
       open={visibleDialog === DialogType.Delete}
@@ -64,7 +64,7 @@ const Delete = ({ visibleDialog, showDialog, onClose }) =>
 const Settings = ({ visibleDialog, showDialog, onClose }) =>
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.Settings)}>
-      <SettingsIcon />
+      <SettingsIcon color='primary'/>
     </Button>
     <ProjectSettingsDialog
       open={visibleDialog === DialogType.Settings}
@@ -82,12 +82,11 @@ const headerStyles = {
   title: {
     fontFamily: 'Rubik',
     letterSpacing: 3,
-    color: 'inherit',
   },
   projectName: {
-    flex: 0.9,
-    color: 'lightgrey',
+    flex: 1,
     fontStyle: 'italic',
+    paddingLeft: 20,
   },
   toolbar: {
      height: 0,
@@ -133,13 +132,12 @@ class Header extends React.Component {
     const dialogType = this.state.dialogType
     return (
       <div>
-        <AppBar>
+        <AppBar color='secondary'>
           <Toolbar style={headerStyles.toolbar}>
             <img src={icon} alt="" style={headerStyles.icon}/>
             <Typography type="title" className={this.props.classes.title}>
               TAGGERINE
             </Typography>
-            <div style={{ flex: 0.1 }}/>
             <Typography type="subheading" className={this.props.classes.projectName}>
               / Awesome project
             </Typography>
