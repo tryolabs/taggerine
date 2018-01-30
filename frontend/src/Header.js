@@ -9,10 +9,6 @@ import UploadIcon from 'material-ui-icons/FileUpload'
 import SettingsIcon from 'material-ui-icons/Settings'
 import Button from 'material-ui/Button'
 import { withStyles } from 'material-ui/styles'
-import {
-  DialogContent,
-  DialogContentText,
-} from 'material-ui/Dialog'
 
 import DialogHelper from './Dialogs/DialogHelper'
 import ImportExportDialog from './Dialogs/ImportExport'
@@ -70,17 +66,11 @@ const Settings = ({ visibleDialog, showDialog, onClose }) =>
     <Button dense color="inherit" onClick={showDialog(DialogType.Settings)}>
       <SettingsIcon />
     </Button>
-    <DialogHelper
+    <ProjectSettingsDialog
       open={visibleDialog === DialogType.Settings}
       title="Settings"
-      onConfirm={() => onClose(true)}
-    >
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          Here will go the project settings...
-        </DialogContentText>
-      </DialogContent>
-    </DialogHelper>
+      onDismiss={onClose}
+    />
   </div>
 
 const headerStyles = {
@@ -133,9 +123,7 @@ class Header extends React.Component {
     this.closeDialog()
   }
 
-  handleSettingsChange = shouldUpdate => {
-    if (shouldUpdate)
-      this.props.onSettingsChange()
+  handleSettingsChange = () => {
     this.closeDialog()
   }
 

@@ -19,9 +19,6 @@ class UploadImagesDialog extends React.Component {
   state = initialState
 
   onConfirm = shouldUpload => () => {
-    if (shouldUpload && this.state.name)
-      this.props.onDismiss(this.state)
-    else
       this.props.onDismiss()
   }
 
