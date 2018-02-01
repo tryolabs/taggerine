@@ -48,4 +48,10 @@ const ImageList = ({ imageList, selectedIdx, onSelect }) =>
     )}
   </AutoSizer>
 
+ImageList.propTypes = {
+  imageList: PropTypes.array,
+  selectedIdx: PropTypes.number,
+  onSelect: PropTypes.func,
+}
+
 export default ImageList
