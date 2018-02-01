@@ -1,14 +1,13 @@
 .Project {
   display: grid;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 110px 200px 100px 100px auto 50px;
+  grid-template-rows: 110px 200px 100px 100px auto;
   grid-template-areas:
     'header header header'
-    'uploader tagger top-right-side-panel'
+    'uploaded-list tagger top-right-side-panel'
     'uploaded-list tagger top-right-side-panel'
     'uploaded-list tagger tag-actions'
-    'uploaded-list tagger tags'
-    'footer footer footer';
+    'uploaded-list tagger tags';
 
   justify-content: stretch;
 
@@ -36,16 +35,6 @@
   padding: 20px;
 }
 
-#footer {
-  grid-area: footer;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #222;
-  color: white;
-}
-
 .title {
   font-size: 2em;
 }
@@ -67,16 +56,6 @@
 
 .autosized-tagger button {
   align-self: stretch;
-}
-
-#uploader {
-  grid-area: uploader;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  padding: 20px;
 }
 
 #uploaded-list {

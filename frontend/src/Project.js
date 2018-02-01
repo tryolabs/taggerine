@@ -413,12 +413,6 @@ class Project extends Component {
           onExportTags={this.downloadTags}
           onDelete={this.cleanAllTags}
         />
-        <div id="uploader">
-          <ImageUploader uploadImages={this.uploadImages} />
-          <span className="image-counter">
-            {countTaggedImages(this.state)}/{this.state.images.length} images
-          </span>
-        </div>
         <div id="uploaded-list">
           <ImageList imageList={images} selectedIdx={currentImageIndex} onSelect={this.handleImageSelection}/>
         </div>
@@ -561,26 +555,6 @@ class Project extends Component {
             )}
           </AutoSizer>
         </div>
-        <footer id="footer">
-          <a
-            id="download"
-            className="button button-link"
-            download="tags.json"
-            // href={`data:application/json;charset=utf-8,${encodeURIComponent(
-            //   this._generateDownloadFile()
-            // )}`}
-          >
-            <DownloadIcon /> Download Tags
-          </a>
-          <UploadTags uploadTags={this.uploadTags} />
-          <a
-            id="clean-tags"
-            className="button button-link second-button"
-            onClick={this._cleanAllTags}
-          >
-            <TrashIcon /> Clean tags
-          </a>
-        </footer>
       </div>
     )
   }
