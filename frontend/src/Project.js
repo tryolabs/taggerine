@@ -28,10 +28,6 @@ const API_URL = process.env.REACT_APP_API_URL
 
 let tagId = 0
 
-function getImageUrl(projectId, imageName) {
-  return `${API_URL}/projects/${projectId}/images/${imageName}`
-}
-
 function getThumbnailUrl(projectId, imageName) {
   return `${API_URL}/projects/${projectId}/images/thumbnail/${imageName}`
 }
@@ -365,6 +361,7 @@ class Project extends Component {
         })
         .map(imageName => ({
           name: imageName,
+          url: `${imagesAPIURL}/${imageName}`,
           thumbnailURL: `${imagesAPIURL}/thumbnail/${imageName}`,
           tags: []
         }))
@@ -403,7 +400,6 @@ class Project extends Component {
   }
 
   render() {
-    const projectId = this.props.match.params.project_id
     const currentImage = getCurrentImage(this.state)
     const currentImageTags = currentImage ? getImageTagsAsList(this.state, currentImage) : []
     const recentTags = getRecentTags(this.state)
@@ -435,8 +431,7 @@ class Project extends Component {
                 </button>
                 {currentImage && (
                   <Tagger
-                    image={getImageUrl(projectId, currentImage)}
-                    tags={currentImageTags}
+                    image={currentImage}
                     updateTag={this.updateTag}
                     width={width - 60}
                     height={height}
