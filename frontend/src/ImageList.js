@@ -32,19 +32,26 @@ const imageListRowRenderer = (imageList, selectedIdx, onSelect) => ({ index, key
   )
 }
 
+const imagesTagged = imageList => imageList.filter(image => image.tags.length > 0).length
+
 const ImageList = ({ imageList, selectedIdx, onSelect }) =>
   <AutoSizer>
     {({ width, height }) => (
-      <List
-        overscanRowCount={10}
-        noRowsRenderer={() => <div className="image-list-empty">No files</div>}
-        rowCount={imageList.length}
-        rowHeight={130}
-        rowRenderer={imageListRowRenderer(imageList, selectedIdx, onSelect)}
-        width={width}
-        height={height}
-        className="image-list"
-      />
+      <div style={{width: width, height: height}}>
+        <span className="image-counter">
+          {imagesTagged(imageList)}/{imageList.length} images
+        </span>
+        <List
+          overscanRowCount={10}
+          noRowsRenderer={() => <div className="image-list-empty">No files</div>}
+          rowCount={imageList.length}
+          rowHeight={130}
+          rowRenderer={imageListRowRenderer(imageList, selectedIdx, onSelect)}
+          width={width}
+          height={height - 20}
+          className="image-list"
+        />
+      </div>
     )}
   </AutoSizer>
 
