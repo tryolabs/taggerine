@@ -178,6 +178,12 @@ class Project extends Component {
     saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
   }
 
+  generateTagList = (images) => {
+    let tags = new Set()
+    images.forEach(image => image.tags.forEach(tag => tags.add(tag.label)))
+    return [...tags]
+  }
+
   addTag = () => {
     this.repeatTag(`tag${tagId}`)
   }
@@ -197,7 +203,7 @@ class Project extends Component {
     const newImage = images[this.state.currentImageIndex]
     images[this.state.currentImageIndex] = {...newImage, tags: [...newImage.tags, newTag]}
 
-    const tags = [...new Set([...this.state.tags, newTag.label])]
+    const tags = this.generateTagList(images)
 
     this.setState({ images, tags }, this.saveState)
   }
@@ -211,7 +217,9 @@ class Project extends Component {
     const newImages = [...images]
     newImages[currentImageIndex].tags = imageTags
 
-    this.setState({ images: newImages }, this.saveState)
+    const tags = this.generateTagList(newImages)
+
+    this.setState({ images: newImages, tags }, this.saveState)
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -225,7 +233,9 @@ class Project extends Component {
     const newImages = [...images]
     newImages[currentImageIndex] = newImage
 
-    this.setState({ images: newImages }, this.saveState)
+    const tags = this.generateTagList(newImages)
+
+    this.setState({ images: newImages, tags }, this.saveState)
   }
 
   removeTag = id => {
@@ -235,19 +245,21 @@ class Project extends Component {
     const newImages = [...this.state.images]
     newImages[currentImageIndex].tags = imageTags
 
-    //TODO: update tags
+    const tags = this.generateTagList(newImages)
 
-    this.setState({ images: newImages }, this.saveState)
+    this.setState({ images: newImages, tags }, this.saveState)
   }
 
   removeCurrentTags = () => {
     const { images, currentImageIndex } = this.state
+    const image = images[currentImageIndex]
+    const newImage = {...image, tags: []}
     const newImages = [...images]
-    newImages[currentImageIndex].tags = []
+    newImages[currentImageIndex] = newImage
 
-    //TODO: update tags
+    const tags = this.generateTagList(newImages)
 
-    this.setState({ images: newImages }, this.saveState)
+    this.setState({ images: newImages, tags }, this.saveState)
   }
 
   cleanAllTags = e => {
