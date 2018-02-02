@@ -8,6 +8,9 @@ import './Tagger.css'
 
 class Tagger extends React.Component {
   addBoundingBoxes = () => {
+    Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
+    this._boundingBoxes = {}
+
     this.props.image.tags.forEach(({ x, y, width, height, label, id }) => {
       const boxAttr = {
         x: x*this._image.width(),
@@ -52,6 +55,9 @@ class Tagger extends React.Component {
   }
 
   addImage() {
+    if (Boolean(this._image))
+      this._image.destroy()
+
     Konva.Image.fromURL(this.props.image.url, konvaImage => {
       const height = konvaImage.height()
       const width = konvaImage.width()
@@ -98,18 +104,9 @@ class Tagger extends React.Component {
       prevProps.height !== this.props.height) &&
       Boolean(this._image)
     ) {
-      this._image.destroy()
-
-      Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
-      this._boundingBoxes = {}
-
       this.addImage()
-    } else if (prevProps.image.tags.length !== this.props.image.tags.length) {
-      Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
-      this._boundingBoxes = {}
-
+    } else if (Boolean(this._image))
       this.addBoundingBoxes()
-    }
   }
 
   render() {

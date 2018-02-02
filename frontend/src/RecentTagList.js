@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { AutoSizer, List } from 'react-virtualized'
 
-const _recentTagListRowRenderer = (tagList, onSelect) => ({ index, key, style }) => {
+const recentTagListRowRenderer = (tagList, onSelect) => ({ index, key, style }) => {
   const tag = tagList[index]
   return (
     <div className="recentTag list-item" key={key} style={style}>
@@ -21,7 +21,7 @@ const RecentTagList = ({ tagList, onSelect }) =>
         noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
         rowCount={tagList.length}
         rowHeight={50}
-        rowRenderer={_recentTagListRowRenderer(tagList, onSelect)}
+        rowRenderer={recentTagListRowRenderer(tagList, onSelect)}
         width={width}
         height={height}
         className="inner-top-right-pannel"

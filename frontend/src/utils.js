@@ -209,7 +209,7 @@ const createBoundingBox = (
   group.on('dragend', function() {
     onDragEnd({
       id,
-      name: text,
+      label: text,
       x: group.x(),
       y: group.y(),
       width: group.width(),

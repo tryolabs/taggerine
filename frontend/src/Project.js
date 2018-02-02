@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
-import { AutoSizer, List } from 'react-virtualized'
+import { AutoSizer } from 'react-virtualized'
 
 import saveAs from 'js-file-download'
 import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
+import ImageTagList from './ImageTagList'
 import ImageList from './ImageList'
 import RecentTagList from './RecentTagList'
 import Tagger from './Tagger'
 import TrashIcon from 'react-icons/lib/fa/trash'
-import RepeatIcon from 'react-icons/lib/fa/repeat'
 import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
 import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
 import axios from 'axios'
@@ -20,10 +20,6 @@ const PRECISION_ERROR = '0.000001'
 const API_URL = process.env.REACT_APP_API_URL
 
 let tagId = 0
-
-const getCurrentImage = state => {
-  return state.images.length ? state.images[state.currentImageIndex] : undefined
-}
 
 class Project extends Component {
   state = {
@@ -218,10 +214,23 @@ class Project extends Component {
     this.setState({ images: newImages }, this.saveState)
   }
 
+  updateTagLabel = (tagIdx, label) => {
+    const { images, currentImageIndex } = this.state
+    const image = images[currentImageIndex]
+
+    const newTag = {...image.tags[tagIdx], label}
+    const newTags = [...image.tags]
+    newTags[tagIdx] = newTag
+    const newImage = {...image, tags: newTags}
+    const newImages = [...images]
+    newImages[currentImageIndex] = newImage
+
+    this.setState({ images: newImages }, this.saveState)
+  }
+
   removeTag = id => {
     const { images, currentImageIndex } = this.state
-    const imageTags = [...images[currentImageIndex].tags]
-    imageTags.filter(t => t.id !== id)
+    const imageTags = [...images[currentImageIndex].tags].filter(t => t.id !== id)
 
     const newImages = [...this.state.images]
     newImages[currentImageIndex].tags = imageTags
@@ -239,28 +248,6 @@ class Project extends Component {
     //TODO: update tags
 
     this.setState({ images: newImages }, this.saveState)
-  }
-
-  _tagListRowRenderer = ({ index, key, style }) => {
-    const image = getCurrentImage(this.state)
-    const tag = image ? image.tags[index] : null
-    return (
-      <div className="tag-item" key={`${image.name}-${key}`} style={style}>
-        <input
-          type="text"
-          defaultValue={tag.label}
-          onChange={e => this.updateTag({ ...tag, label: e.target.value })}
-        />
-        <button className="tag-button" onClick={() => this.repeatTag(tag.label)}>
-          {' '}
-          <RepeatIcon />
-        </button>
-        <button className="tag-button" onClick={() => this.removeTag(tag.id)}>
-          {' '}
-          <TrashIcon />
-        </button>
-      </div>
-    )
   }
 
   cleanAllTags = e => {
@@ -380,21 +367,11 @@ class Project extends Component {
           </button>
         </div>
         <div id="tags">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                key={2}
-                overscanRowCount={10}
-                noRowsRenderer={() => <div className="tag-list-empty">No tags</div>}
-                rowCount={currentImageTags.length}
-                rowHeight={50}
-                rowRenderer={this._tagListRowRenderer}
-                width={width}
-                height={height}
-                className="tag-list"
-              />
-            )}
-          </AutoSizer>
+          <ImageTagList
+            imageTags={currentImageTags}
+            onTagLabelChange={this.updateTagLabel}
+            onRepeatTag={this.repeatTag}
+            onRemoveTag={this.removeTag} />
         </div>
       </div>
     )
