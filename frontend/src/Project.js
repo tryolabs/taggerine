@@ -28,10 +28,12 @@ class Project extends Component {
     tags: [],
     currentImageIndex: 0,
     showSettings: false,
+    lastTagPos: {},
     tagFormat: 'xywh',
     settings: {
       bbWidth: 14,
-      bbHeight: 14
+      bbHeight: 14,
+      bbNextAlign: 'h',
     }
   }
 
@@ -191,14 +193,44 @@ class Project extends Component {
   }
 
   repeatTag = label => {
+    // Recover last tag's x, y, width and height, or use default values
+    let x, y, width, height
+    let lastTagPos = this.state.lastTagPos
+    let tagPos = lastTagPos[label] 
+    if(tagPos){  // Calculate next bb position from previous tag's values
+      x = this.state.settings.bbNextAlign === 'h' ?  tagPos.x + tagPos.width : tagPos.x
+      if(x >= 1){  // outside screen horizontally, go to next row
+          x = 0
+          y = tagPos.y + tagPos.height
+      }
+      else{
+        y = this.state.settings.bbNextAlign === 'v' ?  tagPos.y + tagPos.height : tagPos.y
+      }
+      if(y >= 1){  // outside screen vertically, go to next column
+          x = tagPos.x + tagPos.width
+          y = 0
+      }
+      if(x >= 1){  // Still outside screen? go to top left corner
+          x = 0
+          y = 0
+      }
+      width = tagPos.width
+      height = tagPos.height
+    }
+    else {  // Use default values: no previous tag with same label
+      x = 0
+      y = 0
+      width = this.state.settings.bbWidth/100
+      height = this.state.settings.bbHeight/100
+    }
     const newTag = {
-      x: 0.14,
-      y: 0.14,
+      x, y, width, height,
       label: label,
       id: tagId,
-      width: this.state.settings.bbWidth/100,
-      height: this.state.settings.bbHeight/100
     }
+    lastTagPos[label] = newTag
+    this.setState({lastTagPos}, this.saveState)
+    console.log(this.state)
     tagId += 1
 
     const images = [...this.state.images]
@@ -221,7 +253,10 @@ class Project extends Component {
 
     const tags = this.generateTagList(newImages)
 
-    this.setState({ images: newImages, tags }, this.saveState)
+    const lastTagPos = this.state.lastTagPos
+    lastTagPos[tag.label] = tag
+
+    this.setState({ images: newImages, tags, lastTagPos }, this.saveState)
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -237,7 +272,11 @@ class Project extends Component {
 
     const tags = this.generateTagList(newImages)
 
-    this.setState({ images: newImages, tags }, this.saveState)
+    // Update information of last block for the new label
+    const lastTagPos = this.state.lastTagPos
+    lastTagPos[label] = newTag
+
+    this.setState({ images: newImages, tags, lastTagPos }, this.saveState)
   }
 
   removeTag = id => {

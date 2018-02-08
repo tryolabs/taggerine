@@ -1,8 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { DialogContent, DialogContentText } from 'material-ui/Dialog'
 import TextField from 'material-ui/TextField'
+import { DialogContent, DialogContentText } from 'material-ui/Dialog'
 import { InputAdornment } from 'material-ui/Input'
+import { MenuItem } from 'material-ui/Menu'
 import DialogHelper from './DialogHelper'
 
 /*
@@ -14,7 +15,7 @@ could receive two types of input:
 */
 
 class ProjectSettingsDialog extends React.Component {
-  state = {bbWidth: 0, bbHeight: 0}
+  state = {bbWidth: 0, bbHeight: 0, bbNextAlign: ''}
 
   onConfirm = accept => () => {
       if(accept){  // New settings to parent
@@ -48,6 +49,8 @@ class ProjectSettingsDialog extends React.Component {
       })
     }
   }
+
+  handleNextAlignChange = (evt) => {this.setState({bbNextAlign: evt.target.value})}
 
   render() {
     return (
@@ -86,6 +89,17 @@ class ProjectSettingsDialog extends React.Component {
                          onChange={this.handleHeightChange}
               />
             </div>
+            <TextField select
+             className="bb-setting-select"
+             label="New boxes alignment"
+             InputLabelProps={{shrink: true,}}
+             value={this.state.bbNextAlign}
+             inputProps={{id: 'bb-next-align'}}
+             onChange={this.handleNextAlignChange}
+            >
+              <MenuItem value='v'>Vertical</MenuItem>
+              <MenuItem value='h'>Horizontal</MenuItem>
+            </TextField>
           </DialogContentText>
         </DialogContent>
       </DialogHelper>

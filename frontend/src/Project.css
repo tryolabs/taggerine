@@ -195,6 +195,10 @@
   width: 120px;
 }
 
+.bb-setting-select {
+  width: 170px;
+}
+
 .bb-input-container {
   min-width: 400px;
 }
