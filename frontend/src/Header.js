@@ -61,7 +61,7 @@ const Delete = ({ visibleDialog, showDialog, onClose }) =>
     />
   </div>
 
-const Settings = ({ visibleDialog, showDialog, onClose }) =>
+const Settings = ({ visibleDialog, showDialog, onClose, onSettingsChange, settings }) =>
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.Settings)}>
       <SettingsIcon color='primary'/>
@@ -69,6 +69,8 @@ const Settings = ({ visibleDialog, showDialog, onClose }) =>
     <ProjectSettingsDialog
       open={visibleDialog === DialogType.Settings}
       title="Settings"
+      onSettingsChange={onSettingsChange}
+      settings={settings}
       onDismiss={onClose}
     />
   </div>
@@ -156,6 +158,8 @@ class Header extends React.Component {
             <Settings
               visibleDialog={dialogType}
               showDialog={this.showDialog}
+              settings={this.props.settings}
+              onSettingsChange={this.props.onSettingsChange}
               onClose={_ => this.closeDialog()} />
           </Toolbar>
         </AppBar>

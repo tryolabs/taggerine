@@ -190,32 +190,15 @@
   border: 0;
 }
 
-#settings-container {
-  background-color: lightgrey;
+.bb-input input {
+  text-align: center;
+  width: 120px;
 }
 
-#settings-header {
-  display: flex;
-  justify-content: center;
-  font-weight: bold;
-  margin-bottom: 15px;
+.bb-input-container {
+  min-width: 400px;
 }
 
-.radio {
-  padding-top: 5px;
-  padding-left: 10px;
-}
-
-.slider-container {
-  padding-top: 5px;
-  width: 80%;
-  padding-left: 5%;
-}
-
-#bounding-box-size {
-  padding-top: 20px;
-}
-
-#height-container {
-  padding-top: 10px;
+.bb-input-container > div {
+  margin-right: 25px;
 }

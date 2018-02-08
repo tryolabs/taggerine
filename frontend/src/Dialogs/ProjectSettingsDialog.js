@@ -1,6 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { DialogContent, DialogContentText } from 'material-ui/Dialog'
+import TextField from 'material-ui/TextField'
+import { InputAdornment } from 'material-ui/Input'
 import DialogHelper from './DialogHelper'
 
 /*
@@ -11,20 +13,40 @@ could receive two types of input:
 - No value if the dialog is canceled.
 */
 
-const initialState = {
-  name: null,
-}
+class ProjectSettingsDialog extends React.Component {
+  state = {bbWidth: 0, bbHeight: 0}
 
-class UploadImagesDialog extends React.Component {
-  state = initialState
-
-  onConfirm = shouldUpload => () => {
+  onConfirm = accept => () => {
+      if(accept){  // New settings to parent
+         this.props.onSettingsChange(this.state)
+      }
+      else{  // Retrieve old settings from parent
+         this.setState(this.props.settings)
+      }
       this.props.onDismiss()
   }
 
   componentWillReceiveProps(newProps) {
     if (!newProps.open)
-      this.setState(initialState)
+      this.setState(newProps.settings)
+  }
+
+  handleWidthChange = evt => {
+    var value = evt.target.value;
+    if(value > 0 && value <= 100){
+      this.setState({
+        bbWidth: value
+      })
+    }
+  }
+
+  handleHeightChange = evt => {
+    var value = evt.target.value;
+    if(value > 0 && value <= 100){
+      this.setState({
+        bbHeight: value
+      })
+    }
   }
 
   render() {
@@ -38,7 +60,32 @@ class UploadImagesDialog extends React.Component {
       >
         <DialogContent style={{ paddingBottom: 0 }}>
           <DialogContentText id="alert-dialog-description">
-            Under construction
+            <div className="bb-input-container">
+              <TextField id="bb-width"
+                         type="number"
+                         label="Default box width"
+                         InputLabelProps={{shrink: true, aligh: "center"}}
+                         InputProps={{endAdornment:
+                                      <InputAdornment position="end">%</InputAdornment>,
+                                      className: "bb-input",
+                                     }}
+                         margin="normal"
+                         value={this.state.bbWidth}
+                         onChange={this.handleWidthChange}
+              />
+              <TextField id="bb-height"
+                         type="number"
+                         label="Default box height"
+                         InputLabelProps={{shrink: true,}}
+                         InputProps={{endAdornment:
+                                      <InputAdornment position="end">%</InputAdornment>,
+                                      className: "bb-input",
+                                     }}
+                         margin="normal"
+                         value={this.state.bbHeight}
+                         onChange={this.handleHeightChange}
+              />
+            </div>
           </DialogContentText>
         </DialogContent>
       </DialogHelper>
@@ -46,9 +93,9 @@ class UploadImagesDialog extends React.Component {
   }
 }
 
-UploadImagesDialog.propTypes = {
+ProjectSettingsDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onDismiss: PropTypes.func.isRequired,
 }
 
-export default UploadImagesDialog
+export default ProjectSettingsDialog

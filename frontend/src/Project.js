@@ -29,8 +29,10 @@ class Project extends Component {
     currentImageIndex: 0,
     showSettings: false,
     tagFormat: 'xywh',
-    bbWidth: 0.14,
-    bbHeight: 0.14
+    settings: {
+      bbWidth: 14,
+      bbHeight: 14
+    }
   }
 
   saveState = () => saveToLocalStorage({ ...this.state, tagId })
@@ -194,8 +196,8 @@ class Project extends Component {
       y: 0.14,
       label: label,
       id: tagId,
-      width: this.state.bbWidth,
-      height: this.state.bbHeight
+      width: this.state.settings.bbWidth/100,
+      height: this.state.settings.bbHeight/100
     }
     tagId += 1
 
@@ -294,6 +296,11 @@ class Project extends Component {
 
   handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
 
+  onSettingsChange = newSettings => {
+    this.setState({settings: newSettings}, this.saveState);
+    console.log(newSettings)
+  }
+
   componentWillMount() {
     const loaded = loadFromLocalStorage()
     if (loaded) {
@@ -330,6 +337,8 @@ class Project extends Component {
           onImportTags={this.uploadTags}
           onExportTags={this.downloadTags}
           onDelete={this.cleanAllTags}
+          onSettingsChange={this.onSettingsChange}
+          settings={this.state.settings}
         />
         <div id="uploaded-list">
           <ImageList
