@@ -78,14 +78,12 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
   let width
   if (anchorName === ANCHOR_NAMES.topLeft || anchorName === ANCHOR_NAMES.bottomLeft)
     width = topRight.x() - deltaX
-  else
-    width = deltaX
+  else width = deltaX
 
   let height
   if (anchorName === ANCHOR_NAMES.topLeft || anchorName === ANCHOR_NAMES.topRight)
     height = bottomRight.y() - deltaY
-  else
-    height = deltaY
+  else height = deltaY
 
   topRight.position({ x: width, y: 0 })
   bottomLeft.position({ x: 0, y: height })
@@ -94,21 +92,21 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
   rect.size({ width, height })
   group.size({ width, height })
 
-  let {x, y} = group.position()
+  let { x, y } = group.position()
 
   switch (anchorName) {
     case ANCHOR_NAMES.topLeft:
       x += deltaX
       y += deltaY
-      break;
+      break
     case ANCHOR_NAMES.bottomLeft:
       x += deltaX
-      break;
+      break
     case ANCHOR_NAMES.topRight:
       y += deltaY
-      break;
+      break
     default:
-      break;
+      break
   }
 
   group.position({ x, y })

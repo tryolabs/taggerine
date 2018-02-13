@@ -14,7 +14,7 @@ could receive two types of input:
 
 const initialState = {
   selectedFiles: null,
-  uploadSize: null,
+  uploadSize: null
 }
 
 class UploadImagesDialog extends React.Component {
@@ -37,15 +37,12 @@ class UploadImagesDialog extends React.Component {
   }
 
   onConfirm = shouldUpload => () => {
-    if (shouldUpload && this.state.selectedFiles)
-      this.props.onDismiss(this.state.selectedFiles)
-    else
-      this.props.onDismiss()
+    if (shouldUpload && this.state.selectedFiles) this.props.onDismiss(this.state.selectedFiles)
+    else this.props.onDismiss()
   }
 
   componentWillReceiveProps(newProps) {
-    if (!newProps.open)
-      this.setState(initialState)
+    if (!newProps.open) this.setState(initialState)
   }
 
   render() {
@@ -65,10 +62,8 @@ class UploadImagesDialog extends React.Component {
             multiple
             type="file"
           />
-          <Typography type='caption' style={{ paddingTop: 10 }}>
-            {Boolean(uploadSize)
-              ? `Total size: ${uploadSize}`
-              : 'Select some files to upload'}
+          <Typography type="caption" style={{ paddingTop: 10 }}>
+            {Boolean(uploadSize) ? `Total size: ${uploadSize}` : 'Select some files to upload'}
           </Typography>
         </DialogContent>
       </DialogHelper>
@@ -78,7 +73,7 @@ class UploadImagesDialog extends React.Component {
 
 UploadImagesDialog.propTypes = {
   open: PropTypes.bool.isRequired,
-  onDismiss: PropTypes.func.isRequired,
+  onDismiss: PropTypes.func.isRequired
 }
 
 export default UploadImagesDialog

@@ -1,16 +1,15 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import Radio, { RadioGroup } from 'material-ui/Radio';
+import Radio, { RadioGroup } from 'material-ui/Radio'
 import { FormLabel, FormControl, FormControlLabel } from 'material-ui/Form'
 import DialogHelper from './DialogHelper'
 import { DialogContent } from 'material-ui/Dialog'
 import ExpansionPanel, {
   ExpansionPanelDetails,
-  ExpansionPanelSummary,
+  ExpansionPanelSummary
 } from 'material-ui/ExpansionPanel'
 import Typography from 'material-ui/Typography'
 import ExpandMoreIcon from 'material-ui-icons/ExpandMore'
-
 
 /*
 ImportExportDialog: show a dialog to import or export tags. The 'onDismiss' callback
@@ -24,7 +23,7 @@ could receive three types of input:
 const initialState = {
   format: 'XYWH',
   file: null,
-  operation: null,
+  operation: null
 }
 
 class ImportExport extends React.Component {
@@ -37,26 +36,21 @@ class ImportExport extends React.Component {
     this.setState({ file })
   }
 
-  onPanelExpaned = panel => (_, expanded) => this.setState({ operation: expanded ? panel : null})
+  onPanelExpaned = panel => (_, expanded) => this.setState({ operation: expanded ? panel : null })
 
   onConfirm = confirm => () => {
-    if (!confirm)
-      this.props.onDismiss()
+    if (!confirm) this.props.onDismiss()
     else {
       const { operation, file, format } = this.state
 
-      if (operation === 'import' && Boolean(file))
-        this.props.onDismiss(file)
-      else if (operation === 'export')
-        this.props.onDismiss(format)
-      else
-        this.props.onDismiss()
+      if (operation === 'import' && Boolean(file)) this.props.onDismiss(file)
+      else if (operation === 'export') this.props.onDismiss(format)
+      else this.props.onDismiss()
     }
   }
 
   componentWillReceiveProps(newProps) {
-    if (!newProps.open)
-      this.setState(initialState)
+    if (!newProps.open) this.setState(initialState)
   }
 
   render() {
@@ -70,22 +64,23 @@ class ImportExport extends React.Component {
         onCancel={this.onConfirm(false)}
       >
         <DialogContent style={{ padding: 10 }}>
-          <ExpansionPanel expanded={operation === 'import'} onChange={this.onPanelExpaned('import')}>
+          <ExpansionPanel
+            expanded={operation === 'import'}
+            onChange={this.onPanelExpaned('import')}
+          >
             <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Import</Typography>
             </ExpansionPanelSummary>
             <ExpansionPanelDetails>
               <Typography>
-                <input
-                  onChange={this.onFilesSelected}
-                  accept='.json'
-                  multiple
-                  type="file"
-                />
+                <input onChange={this.onFilesSelected} accept=".json" multiple type="file" />
               </Typography>
             </ExpansionPanelDetails>
           </ExpansionPanel>
-          <ExpansionPanel expanded={operation === 'export'} onChange={this.onPanelExpaned('export')}>
+          <ExpansionPanel
+            expanded={operation === 'export'}
+            onChange={this.onPanelExpaned('export')}
+          >
             <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Export</Typography>
             </ExpansionPanelSummary>
@@ -101,11 +96,13 @@ class ImportExport extends React.Component {
                   <FormControlLabel
                     value="XYWH"
                     control={<Radio />}
-                    label="Top left, width and height (x, y, width, height)" />
+                    label="Top left, width and height (x, y, width, height)"
+                  />
                   <FormControlLabel
                     value="XYXY"
                     control={<Radio />}
-                    label="Top left, bottom right (x_min, y_min, x_max, y_max)" />
+                    label="Top left, bottom right (x_min, y_min, x_max, y_max)"
+                  />
                 </RadioGroup>
               </FormControl>
             </ExpansionPanelDetails>
@@ -118,7 +115,7 @@ class ImportExport extends React.Component {
 
 ImportExport.propTypes = {
   open: PropTypes.bool.isRequired,
-  onDismiss: PropTypes.func.isRequired,
+  onDismiss: PropTypes.func.isRequired
 }
 
 export default ImportExport

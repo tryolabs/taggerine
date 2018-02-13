@@ -15,11 +15,7 @@ const imageListRowRenderer = (imageList, selectedIdx, onSelect) => ({ index, key
         onClick={() => onSelect(index)}
       >
         <div className="image-item">
-          <img
-            className="thumbnail"
-            src={image.thumbnailURL}
-            alt={image.name}
-          />
+          <img className="thumbnail" src={image.thumbnailURL} alt={image.name} />
           <span className="image-item-name">{image.name}</span>
         </div>
         {isProcessed ? (
@@ -34,10 +30,10 @@ const imageListRowRenderer = (imageList, selectedIdx, onSelect) => ({ index, key
 
 const imagesTagged = imageList => imageList.filter(image => image.tags.length > 0).length
 
-const ImageList = ({ imageList, selectedIdx, onSelect }) =>
+const ImageList = ({ imageList, selectedIdx, onSelect }) => (
   <AutoSizer>
     {({ width, height }) => (
-      <div style={{width: width, height: height}}>
+      <div style={{ width: width, height: height }}>
         <span className="image-counter">
           {imagesTagged(imageList)}/{imageList.length} images
         </span>
@@ -54,11 +50,12 @@ const ImageList = ({ imageList, selectedIdx, onSelect }) =>
       </div>
     )}
   </AutoSizer>
+)
 
 ImageList.propTypes = {
   imageList: PropTypes.array,
   selectedIdx: PropTypes.number,
-  onSelect: PropTypes.func,
+  onSelect: PropTypes.func
 }
 
 export default ImageList

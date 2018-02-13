@@ -22,22 +22,21 @@ const theme = createMuiTheme({
       light: '#ffa544',
       main: '#e2750a',
       dark: '#aa4700',
-      contrastText: '#fff',
+      contrastText: '#fff'
     },
     secondary: {
       light: '#ffffff',
       main: '#e2e2e2',
       dark: '#b0b0b0',
-      contrastText: '#000',
-    },
-  },
+      contrastText: '#000'
+    }
+  }
 })
 
 class App extends Component {
   state = {}
 
   render() {
-
     return (
       <MuiThemeProvider theme={theme}>
         <div className="App">

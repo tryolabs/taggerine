@@ -25,32 +25,28 @@ const DialogType = Object.freeze({
   Settings: 4
 })
 
-const UploadImages = ({ visibleDialog, showDialog, onClose }) =>
+const UploadImages = ({ visibleDialog, showDialog, onClose }) => (
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.UploadImage)}>
-      <UploadIcon color='primary'/>
+      <UploadIcon color="primary" />
     </Button>
-    <UploadImagesDialog
-      open={visibleDialog === DialogType.UploadImage}
-      onDismiss={onClose}
-    />
+    <UploadImagesDialog open={visibleDialog === DialogType.UploadImage} onDismiss={onClose} />
   </div>
+)
 
-const ImportExport = ({ visibleDialog, showDialog, onClose }) =>
+const ImportExport = ({ visibleDialog, showDialog, onClose }) => (
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.ImportExport)}>
-      <ImportExportIcon color='primary'/>
+      <ImportExportIcon color="primary" />
     </Button>
-    <ImportExportDialog
-      open={visibleDialog === DialogType.ImportExport}
-      onDismiss={onClose}
-    />
+    <ImportExportDialog open={visibleDialog === DialogType.ImportExport} onDismiss={onClose} />
   </div>
+)
 
-const Delete = ({ visibleDialog, showDialog, onClose }) =>
+const Delete = ({ visibleDialog, showDialog, onClose }) => (
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.Delete)}>
-      <DeleteIcon color='primary'/>
+      <DeleteIcon color="primary" />
     </Button>
     <DialogHelper
       open={visibleDialog === DialogType.Delete}
@@ -60,11 +56,12 @@ const Delete = ({ visibleDialog, showDialog, onClose }) =>
       onCancel={() => onClose(false)}
     />
   </div>
+)
 
-const Settings = ({ visibleDialog, showDialog, onClose, onSettingsChange, settings }) =>
+const Settings = ({ visibleDialog, showDialog, onClose, onSettingsChange, settings }) => (
   <div>
     <Button dense color="inherit" onClick={showDialog(DialogType.Settings)}>
-      <SettingsIcon color='primary'/>
+      <SettingsIcon color="primary" />
     </Button>
     <ProjectSettingsDialog
       open={visibleDialog === DialogType.Settings}
@@ -74,46 +71,46 @@ const Settings = ({ visibleDialog, showDialog, onClose, onSettingsChange, settin
       onDismiss={onClose}
     />
   </div>
+)
 
 const headerStyles = {
   icon: {
     maxHeight: '60%',
     maxWidth: '60%',
-    paddingRight: 20,
+    paddingRight: 20
   },
   title: {
     fontFamily: 'Rubik',
-    letterSpacing: 3,
+    letterSpacing: 3
   },
   projectName: {
     flex: 1,
     fontStyle: 'italic',
-    paddingLeft: 20,
+    paddingLeft: 20
   },
   toolbar: {
-     height: 0,
-  },
-};
+    height: 0
+  }
+}
 
 class Header extends React.Component {
   state = {
-    dialogType: DialogType.None,
+    dialogType: DialogType.None
   }
 
   showDialog = dialog => () => this.setState({ dialogType: dialog })
   closeDialog = () => this.setState({ dialogType: DialogType.None })
 
   handleUploadImages = files => {
-    if (Boolean(files))
-      this.props.onUploadImage(files)
+    if (Boolean(files)) this.props.onUploadImage(files)
     this.closeDialog()
   }
 
   handleImportExport = param => {
-    if (typeof(param) === 'string')
+    if (typeof param === 'string')
       //param has the selected export format
       this.props.onExportTags(param)
-    else if (typeof(param) === 'object') {
+    else if (typeof param === 'object') {
       //param is a file to import the tags from
       this.props.onImportTags(param)
     }
@@ -121,8 +118,7 @@ class Header extends React.Component {
   }
 
   handleDelete = shouldDelete => {
-    if (shouldDelete)
-      this.props.onDelete()
+    if (shouldDelete) this.props.onDelete()
     this.closeDialog()
   }
 
@@ -134,9 +130,9 @@ class Header extends React.Component {
     const dialogType = this.state.dialogType
     return (
       <div>
-        <AppBar color='secondary'>
+        <AppBar color="secondary">
           <Toolbar style={headerStyles.toolbar}>
-            <img src={icon} alt="" style={headerStyles.icon}/>
+            <img src={icon} alt="" style={headerStyles.icon} />
             <Typography type="title" className={this.props.classes.title}>
               TAGGERINE
             </Typography>
@@ -146,21 +142,25 @@ class Header extends React.Component {
             <UploadImages
               visibleDialog={dialogType}
               showDialog={this.showDialog}
-              onClose={this.handleUploadImages} />
+              onClose={this.handleUploadImages}
+            />
             <ImportExport
               visibleDialog={dialogType}
               showDialog={this.showDialog}
-              onClose={this.handleImportExport} />
+              onClose={this.handleImportExport}
+            />
             <Delete
               visibleDialog={dialogType}
               showDialog={this.showDialog}
-              onClose={this.handleDelete} />
+              onClose={this.handleDelete}
+            />
             <Settings
               visibleDialog={dialogType}
               showDialog={this.showDialog}
               settings={this.props.settings}
               onSettingsChange={this.props.onSettingsChange}
-              onClose={_ => this.closeDialog()} />
+              onClose={_ => this.closeDialog()}
+            />
           </Toolbar>
         </AppBar>
       </div>
@@ -173,7 +173,7 @@ Header.propTypes = {
   onImportTags: PropTypes.func.isRequired,
   onExportTags: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
-  onSettingsChange: PropTypes.func.isRequired,
+  onSettingsChange: PropTypes.func.isRequired
 }
 
 export default withStyles(headerStyles)(Header)
