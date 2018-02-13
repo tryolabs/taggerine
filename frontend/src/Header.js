@@ -55,7 +55,7 @@ const Delete = ({ visibleDialog, showDialog, onClose }) =>
     <DialogHelper
       open={visibleDialog === DialogType.Delete}
       title="Delete all tags"
-      message="Are you sure that you want to delete all the tags? This can't be undo"
+      message="Are you sure that you want to delete all the tags? This can't be undone"
       onConfirm={() => onClose(true)}
       onCancel={() => onClose(false)}
     />

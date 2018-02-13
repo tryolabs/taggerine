@@ -5,13 +5,14 @@ import saveAs from 'js-file-download'
 import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
 import ImageTagList from './ImageTagList'
+import DialogHelper from './Dialogs/DialogHelper'
 import ImageList from './ImageList'
 import RecentTagList from './RecentTagList'
 import Tagger from './Tagger'
 import axios from 'axios'
 
 import Button from 'material-ui/Button'
-import Card, {CardActions, CardContent} from 'material-ui/Card'
+import Card, { CardActions, CardContent } from 'material-ui/Card'
 
 import AddIcon from 'material-ui-icons/Add'
 import ClearIcon from 'material-ui-icons/Clear'
@@ -32,10 +33,11 @@ class Project extends Component {
     currentImageIndex: 0,
     lastTagPos: {},
     tagFormat: 'xywh',
+    showDeleteImageTagsDialog: false,
     settings: {
       bbWidth: 14,
       bbHeight: 14,
-      bbNextAlign: 'h',
+      bbNextAlign: 'h'
     }
   }
 
@@ -102,8 +104,7 @@ class Project extends Component {
     const format = this._tagFormat(newTags)
     return newTags.map(newTag => {
       const tag = oldTags.find(oldTag => {
-        if (oldTag.name !== newTag.label)
-          return false
+        if (oldTag.name !== newTag.label) return false
         if (format === 'xywh') {
           return (
             oldTag.x === newTag.x &&
@@ -121,15 +122,12 @@ class Project extends Component {
         }
       })
 
-      if (Boolean(tag))
-        return tag
+      if (Boolean(tag)) return tag
       else {
         let id = tagId
         tagId += 1
-        if (format === 'xyxy')
-          this._XYXYFormatToXYWH(tagId, newTag)
-        else
-          newTag.id = id
+        if (format === 'xyxy') this._XYXYFormatToXYWH(tagId, newTag)
+        else newTag.id = id
         return newTag
       }
     })
@@ -156,9 +154,8 @@ class Project extends Component {
         const newTags = uploadedTags[image.name]
         if (Boolean(newTags)) {
           tags = [...new Set([...tags, ...newTags.map(t => t.label)])]
-          return {...image, tags: this._mergeTags(newTags, image.tags)}
-        } else
-          return image
+          return { ...image, tags: this._mergeTags(newTags, image.tags) }
+        } else return image
       })
       this.setState({ images, tags }, this.saveState)
     }
@@ -178,13 +175,13 @@ class Project extends Component {
           label
         }))
       }
-      return {...acc, [image.name]: data}
+      return { ...acc, [image.name]: data }
     }, {})
     const content = JSON.stringify(toDownload)
     saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
   }
 
-  generateTagList = (images) => {
+  generateTagList = images => {
     let tags = new Set()
     images.forEach(image => image.tags.forEach(tag => tags.add(tag.label)))
     return [...tags]
@@ -198,46 +195,52 @@ class Project extends Component {
     // Recover last tag's x, y, width and height, or use default values
     let x, y, width, height
     let lastTagPos = this.state.lastTagPos
-    let tagPos = lastTagPos[label] 
-    if(tagPos){  // Calculate next bb position from previous tag's values
-      x = this.state.settings.bbNextAlign === 'h' ?  tagPos.x + tagPos.width : tagPos.x
-      if(x >= 1){  // outside screen horizontally, go to next row
-          x = 0
-          y = tagPos.y + tagPos.height
+    let tagPos = lastTagPos[label]
+    if (tagPos) {
+      // Calculate next bb position from previous tag's values
+      x = this.state.settings.bbNextAlign === 'h' ? tagPos.x + tagPos.width : tagPos.x
+      if (x >= 1) {
+        // outside screen horizontally, go to next row
+        x = 0
+        y = tagPos.y + tagPos.height
+      } else {
+        y = this.state.settings.bbNextAlign === 'v' ? tagPos.y + tagPos.height : tagPos.y
       }
-      else{
-        y = this.state.settings.bbNextAlign === 'v' ?  tagPos.y + tagPos.height : tagPos.y
+      if (y >= 1) {
+        // outside screen vertically, go to next column
+        x = tagPos.x + tagPos.width
+        y = 0
       }
-      if(y >= 1){  // outside screen vertically, go to next column
-          x = tagPos.x + tagPos.width
-          y = 0
-      }
-      if(x >= 1){  // Still outside screen? go to top left corner
-          x = 0
-          y = 0
+      if (x >= 1) {
+        // Still outside screen? go to top left corner
+        x = 0
+        y = 0
       }
       width = tagPos.width
       height = tagPos.height
-    }
-    else {  // Use default values: no previous tag with same label
+    } else {
+      // Use default values: no previous tag with same label
       x = 0
       y = 0
-      width = this.state.settings.bbWidth/100
-      height = this.state.settings.bbHeight/100
+      width = this.state.settings.bbWidth / 100
+      height = this.state.settings.bbHeight / 100
     }
     const newTag = {
-      x, y, width, height,
+      x,
+      y,
+      width,
+      height,
       label: label,
-      id: tagId,
+      id: tagId
     }
     lastTagPos[label] = newTag
-    this.setState({lastTagPos}, this.saveState)
+    this.setState({ lastTagPos }, this.saveState)
     console.log(this.state)
     tagId += 1
 
     const images = [...this.state.images]
     const newImage = images[this.state.currentImageIndex]
-    images[this.state.currentImageIndex] = {...newImage, tags: [...newImage.tags, newTag]}
+    images[this.state.currentImageIndex] = { ...newImage, tags: [...newImage.tags, newTag] }
 
     const tags = this.generateTagList(images)
 
@@ -265,10 +268,10 @@ class Project extends Component {
     const { images, currentImageIndex } = this.state
     const image = images[currentImageIndex]
 
-    const newTag = {...image.tags[tagIdx], label}
+    const newTag = { ...image.tags[tagIdx], label }
     const newTags = [...image.tags]
     newTags[tagIdx] = newTag
-    const newImage = {...image, tags: newTags}
+    const newImage = { ...image, tags: newTags }
     const newImages = [...images]
     newImages[currentImageIndex] = newImage
 
@@ -293,21 +296,9 @@ class Project extends Component {
     this.setState({ images: newImages, tags }, this.saveState)
   }
 
-  removeCurrentTags = () => {
-    const { images, currentImageIndex } = this.state
-    const image = images[currentImageIndex]
-    const newImage = {...image, tags: []}
-    const newImages = [...images]
-    newImages[currentImageIndex] = newImage
-
-    const tags = this.generateTagList(newImages)
-
-    this.setState({ images: newImages, tags }, this.saveState)
-  }
-
   cleanAllTags = e => {
     const tags = []
-    const images = [...this.state.images].map(image => ({...image, tags: []}))
+    const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
     this.setState({ images, tags }, this.saveState)
   }
 
@@ -318,19 +309,20 @@ class Project extends Component {
     return axios.get(imagesAPIURL).then(response => {
       this.setState(prevState => {
         const images = [...new Set([...prevState.images.map(i => i.name), ...response.data.images])]
-        .sort((aImg, bImg) => {
-          return aImg.localeCompare(bImg)
-        })
-        .map(imageName => ({
-          name: imageName,
-          url: `${imagesAPIURL}/${imageName}`,
-          thumbnailURL: `${imagesAPIURL}/thumbnail/${imageName}`,
-          tags: []
-        }))
+          .sort((aImg, bImg) => {
+            return aImg.localeCompare(bImg)
+          })
+          .map(imageName => ({
+            name: imageName,
+            url: `${imagesAPIURL}/${imageName}`,
+            thumbnailURL: `${imagesAPIURL}/thumbnail/${imageName}`,
+            tags: []
+          }))
 
         return {
           images,
-          totalImages:  response.data.total_images}
+          totalImages: response.data.total_images
+        }
       })
     })
   }
@@ -338,8 +330,27 @@ class Project extends Component {
   handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
 
   onSettingsChange = newSettings => {
-    this.setState({settings: newSettings}, this.saveState);
+    this.setState({ settings: newSettings }, this.saveState)
     console.log(newSettings)
+  }
+
+  showDeleteImageTagsDialog = () => {
+    this.setState({ showDeleteImageTagsDialog: true })
+  }
+
+  confirmDeleteImageTags = confirmed => {
+    this.setState({ showDeleteImageTagsDialog: false })
+    if (confirmed) {
+      const { images, currentImageIndex } = this.state
+      const image = images[currentImageIndex]
+      const newImage = { ...image, tags: [] }
+      const newImages = [...images]
+      newImages[currentImageIndex] = newImage
+
+      const tags = this.generateTagList(newImages)
+
+      this.setState({ images: newImages, tags }, this.saveState)
+    }
   }
 
   componentWillMount() {
@@ -409,8 +420,9 @@ class Project extends Component {
             <RecentTagList tagList={tags} onSelect={this.repeatTag} />
           </CardContent>
           <CardActions className="taglist-cardactions">
-            <Button onClick={this.addTag} disabled={!images.length}><AddIcon/></Button>
-            <Button onClick={this.removeCurrentTags} disabled={!currentImageTags.length}><ClearIcon/></Button>
+            <Button color="primary" onClick={this.addTag} disabled={!images.length}>
+              <AddIcon />
+            </Button>
           </CardActions>
         </Card>
         <Card id="taglist-imagetags">
@@ -419,8 +431,25 @@ class Project extends Component {
               imageTags={currentImageTags}
               onTagLabelChange={this.updateTagLabel}
               onRepeatTag={this.repeatTag}
-              onRemoveTag={this.removeTag} />
+              onRemoveTag={this.removeTag}
+            />
           </CardContent>
+          <CardActions className="taglist-cardactions">
+            <Button
+              color="primary"
+              onClick={this.showDeleteImageTagsDialog}
+              disabled={!currentImageTags.length}
+            >
+              <ClearIcon />
+            </Button>
+            <DialogHelper
+              open={this.state.showDeleteImageTagsDialog}
+              title="Delete all tags from this image?"
+              message="Are you sure that you want to delete all bounding boxes from this image? This can't be undone."
+              onConfirm={() => this.confirmDeleteImageTags(true)}
+              onCancel={() => this.confirmDeleteImageTags(false)}
+            />
+          </CardActions>
         </Card>
       </div>
     )

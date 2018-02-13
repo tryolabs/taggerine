@@ -35,7 +35,7 @@
 
 .taglist-cardactions {
   flex-grow: 0;
-  justify-content: space-between;
+  justify-content: center;
   min-height: 52px;
 }
 
