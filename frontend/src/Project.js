@@ -8,14 +8,13 @@ import ImageTagList from './ImageTagList'
 import ImageList from './ImageList'
 import RecentTagList from './RecentTagList'
 import Tagger from './Tagger'
-import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
-import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
 import axios from 'axios'
 
 import Button from 'material-ui/Button'
+import Card, {CardActions, CardContent} from 'material-ui/Card'
+
 import AddIcon from 'material-ui-icons/Add'
 import ClearIcon from 'material-ui-icons/Clear'
-import Card, {CardActions, CardContent} from 'material-ui/Card'
 
 import './Project.css'
 import Header from './Header'
@@ -393,9 +392,6 @@ class Project extends Component {
           <AutoSizer>
             {({ width, height }) => (
               <div style={{ width, height }} className="autosized-tagger">
-                <button onClick={this.prevImage} disabled={images.length <= 1}>
-                  <ArrowLeftIcon />
-                </button>
                 {currentImage && (
                   <Tagger
                     image={currentImage}
@@ -404,9 +400,6 @@ class Project extends Component {
                     height={height}
                   />
                 )}
-                <button onClick={this.nextImage} disabled={images.length <= 1}>
-                  <ArrowRightIcon />
-                </button>
               </div>
             )}
           </AutoSizer>
