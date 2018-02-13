@@ -2,46 +2,31 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import TrashIcon from 'react-icons/lib/fa/trash'
 import RepeatIcon from 'react-icons/lib/fa/repeat'
-import { AutoSizer, List } from 'react-virtualized'
+import { AutoSizer } from 'react-virtualized'
+import Input from 'material-ui/Input'
+import IconButton from 'material-ui/IconButton'
+import List, { ListItem, ListItemText, ListItemSecondaryAction } from 'material-ui/List'
+import Typography from 'material-ui/Typography'
+import CancelIcon from 'material-ui-icons/Cancel'
+import RefreshIcon from 'material-ui-icons/Refresh'
 
 
-const tagListRowRenderer = ({ imageTags, onTagLabelChange, onRepeatTag, onRemoveTag }) => ({ index, key, style }) => {
-  const tag = imageTags[index]
-  return (
-    <div className="tag-item" key={key} style={style}>
-      <input
-        type="text"
-        defaultValue={tag.label}
-        onChange={e => onTagLabelChange(index, e.target.value)}
-      />
-      <button className="tag-button" onClick={() => onRepeatTag(tag.label)}>
-        {' '}
-        <RepeatIcon />
-      </button>
-      <button className="tag-button" onClick={() => onRemoveTag(tag.id)}>
-        {' '}
-        <TrashIcon />
-      </button>
-    </div>
-  )
-}
-
-const ImageTagList = (props) =>
-  <AutoSizer>
-    {({ width, height }) => (
-      <List
-        key={2}
-        overscanRowCount={10}
-        noRowsRenderer={() => <div className="tag-list-empty">No tags</div>}
-        rowCount={props.imageTags.length}
-        rowHeight={50}
-        rowRenderer={tagListRowRenderer(props)}
-        width={width}
-        height={height}
-        className="tag-list"
-      />
-    )}
-  </AutoSizer>
+const ImageTagList = ({ imageTags, onTagLabelChange, onRepeatTag, onRemoveTag }) =>
+    imageTags.length ?
+    <List>
+      {imageTags.map((imageTag, index) => 
+          <ListItem divider={true} dense={true} key={index}>
+            <Input disableUnderline={true} className="taglist-row-label" defaultValue={imageTag.label} onChange={(e) => onTagLabelChange(index, e.target.value)}/>
+            <ListItemSecondaryAction>
+              <IconButton>
+                <RefreshIcon onClick={() => {onRepeatTag(imageTag.label)}}/>
+                <CancelIcon onClick={() => {onRemoveTag(imageTag.id)}}/>
+              </IconButton>
+            </ListItemSecondaryAction>
+          </ListItem>
+      )}
+    </List>
+    : <Typography component="p" align="center" color="secondary" > Image has no tags </Typography>
 
 ImageTagList.propTypes = {
   imageTags: PropTypes.array,

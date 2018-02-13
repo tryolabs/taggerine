@@ -8,10 +8,14 @@ import ImageTagList from './ImageTagList'
 import ImageList from './ImageList'
 import RecentTagList from './RecentTagList'
 import Tagger from './Tagger'
-import TrashIcon from 'react-icons/lib/fa/trash'
 import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
 import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
 import axios from 'axios'
+
+import Button from 'material-ui/Button'
+import AddIcon from 'material-ui-icons/Add'
+import ClearIcon from 'material-ui-icons/Clear'
+import Card, {CardActions, CardContent} from 'material-ui/Card'
 
 import './Project.css'
 import Header from './Header'
@@ -27,7 +31,6 @@ class Project extends Component {
     totalImages: 0,
     tags: [],
     currentImageIndex: 0,
-    showSettings: false,
     lastTagPos: {},
     tagFormat: 'xywh',
     settings: {
@@ -408,31 +411,24 @@ class Project extends Component {
             )}
           </AutoSizer>
         </div>
-        {!this.state.showSettings && (
-          <div id="recent-tags">
+        <Card id="taglist-recentlist">
+          <CardContent className="taglist-cardcontent">
             <RecentTagList tagList={tags} onSelect={this.repeatTag} />
-          </div>
-        )}
-        <div id="tag-actions">
-          <button className="button" onClick={this.addTag} key={0} disabled={!images.length}>
-            Add Bounding Box
-          </button>
-          <button
-            className="button second-button"
-            onClick={this.removeCurrentTags}
-            key={1}
-            disabled={!currentImageTags.length}
-          >
-            <TrashIcon /> Remove Bounding Boxes
-          </button>
-        </div>
-        <div id="tags">
-          <ImageTagList
-            imageTags={currentImageTags}
-            onTagLabelChange={this.updateTagLabel}
-            onRepeatTag={this.repeatTag}
-            onRemoveTag={this.removeTag} />
-        </div>
+          </CardContent>
+          <CardActions className="taglist-cardactions">
+            <Button onClick={this.addTag} disabled={!images.length}><AddIcon/></Button>
+            <Button onClick={this.removeCurrentTags} disabled={!currentImageTags.length}><ClearIcon/></Button>
+          </CardActions>
+        </Card>
+        <Card id="taglist-imagetags">
+          <CardContent className="taglist-cardcontent">
+            <ImageTagList
+              imageTags={currentImageTags}
+              onTagLabelChange={this.updateTagLabel}
+              onRepeatTag={this.repeatTag}
+              onRemoveTag={this.removeTag} />
+          </CardContent>
+        </Card>
       </div>
     )
   }

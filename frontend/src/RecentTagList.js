@@ -1,33 +1,22 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { AutoSizer, List } from 'react-virtualized'
-
-const recentTagListRowRenderer = (tagList, onSelect) => ({ index, key, style }) => {
-  const tag = tagList[index]
-  return (
-    <div className="recentTag list-item" key={key} style={style}>
-      <a className="button button-link" onClick={() => onSelect(tag)}>
-        {tag}
-      </a>
-    </div>
-  )
-}
+import Chip from 'material-ui/Chip'
+import Typography from 'material-ui/Typography'
 
 const RecentTagList = ({ tagList, onSelect }) =>
-  <AutoSizer>
-    {({ width, height }) => (
-      <List
-        overscanRowCount={10}
-        noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
-        rowCount={tagList.length}
-        rowHeight={50}
-        rowRenderer={recentTagListRowRenderer(tagList, onSelect)}
-        width={width}
-        height={height}
-        className="inner-top-right-pannel"
-      />
-    )}
-  </AutoSizer>
+    tagList.length ?
+    <div className="taglist-tagcontainer">
+      {tagList.map((tag, index) => 
+        <Chip
+          key={index}
+          className="taglist-tag"
+          label={tag}
+          onClick={() => onSelect(tag)}
+        />
+      )}
+    </div>
+    : <Typography component="p" align="center" color="secondary" > No recent tags </Typography>
+
 
 RecentTagList.propTypes = {
   tagList: PropTypes.array,

@@ -6,7 +6,8 @@
     'header header header'
     'uploaded-list tagger top-right-side-panel'
     'uploaded-list tagger top-right-side-panel'
-    'uploaded-list tagger tag-actions'
+    'uploaded-list tagger tags'
+    'uploaded-list tagger tags'
     'uploaded-list tagger tags';
 
   justify-content: stretch;
@@ -16,11 +17,45 @@
   font-family: 'sans-serif';
 }
 
-#tag-actions {
-  grid-area: tag-actions;
+#taglist-recentlist {
+  grid-area: top-right-side-panel;
+  margin: 15px 5px 15px 5px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#taglist-imagetags {
+  grid-area: tags;
+  margin: 5px 5px 15px 5px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.taglist-cardactions {
+  flex-grow: 0;
+  justify-content: space-between;
+  min-height: 52px;
+}
+
+.taglist-cardcontent {
+  flex-grow: 1;
+  overflow: auto;
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+
+.taglist-tagcontainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-grow: 1;
+  justify-content: space-evenly;
+}
+
+.taglist-row-label{
+  width: 80%;
 }
 
 #header {
@@ -64,24 +99,12 @@
   padding: 0 20px 20px 20px;
 }
 
-#recent-tags {
-  grid-area: top-right-side-panel;
-
-  padding: 20px;
-  min-height: 300px;
-}
-
 #settings {
   grid-area: top-right-side-panel;
 
   padding: 20px;
   min-height: 300px;
 
-}
-#tags {
-  grid-area: tags;
-
-  padding: 0 20px 20px 20px;
 }
 
 .image-list {
@@ -114,46 +137,6 @@
 
 .image-counter {
   text-align: right;
-}
-
-.inner-top-right-pannel {
-  border: solid 2px black;
-  border-radius: 5px;
-  height: 100%;
-}
-
-.tag-list {
-  border: solid 2px black;
-  border-radius: 5px;
-}
-
-.button {
-  font: bold 15px Arial;
-  text-decoration: none;
-  background-color: #eeeeee;
-  padding: 2px 6px 2px 6px;
-  border-top: 1px solid #cccccc;
-  border-right: 1px solid #333333;
-  border-bottom: 1px solid #333333;
-  border-left: 1px solid #cccccc;
-  border-radius: 10px 10px;
-}
-
-.button-link {
-  color: #333333;
-  cursor: pointer;
-}
-
-.recentTag {
-  cursor: pointer;
-}
-
-.tag-item {
-  padding: 10px;
-}
-
-.tag-button {
-  margin-left: 5px;
 }
 
 .thumbnail {
@@ -205,4 +188,8 @@
 
 .bb-input-container > div {
   margin-right: 25px;
+}
+
+.taglist-tag {
+  margin: 2px;
 }
