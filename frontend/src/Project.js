@@ -145,6 +145,37 @@ class Project extends Component {
     delete bbox.y_min
   }
 
+  /*
+   * Calculate next bb position and size from previous bbox's values
+   * Placement of next bbox can be configured to be vertically or horizontally aligned (bbNextAlign)
+   * If canvas edges are reached, go to next row/column, or restart from top left corner.
+   */
+  _calculateNextBBox(tagPos) {
+    var x, y, width, height
+
+    x = this.state.settings.bbNextAlign === 'h' ? tagPos.x + tagPos.width : tagPos.x
+    if (x + tagPos.width >= 1) {
+      // outside screen horizontally, go to next row
+      x = 0
+      y = tagPos.y + tagPos.height
+    } else {
+      y = this.state.settings.bbNextAlign === 'v' ? tagPos.y + tagPos.height : tagPos.y
+    }
+    if (y + tagPos.height >= 1) {
+      // outside screen vertically, go to next column
+      x = tagPos.x + tagPos.width
+      y = 0
+    }
+    if (x + tagPos.width >= 1) {
+      // Still outside screen? go to top left corner
+      x = 0
+      y = 0
+    }
+    width = tagPos.width
+    height = tagPos.height
+    return { x, y, width, height }
+  }
+
   uploadTags = tagFile => {
     let reader = new FileReader()
     reader.onload = e => {
@@ -192,47 +223,21 @@ class Project extends Component {
   }
 
   repeatTag = label => {
-    // Recover last tag's x, y, width and height, or use default values
-    let x, y, width, height
     let lastTagPos = this.state.lastTagPos
-    let tagPos = lastTagPos[label]
-    if (tagPos) {
-      // Calculate next bb position from previous tag's values
-      x = this.state.settings.bbNextAlign === 'h' ? tagPos.x + tagPos.width : tagPos.x
-      if (x >= 1) {
-        // outside screen horizontally, go to next row
-        x = 0
-        y = tagPos.y + tagPos.height
-      } else {
-        y = this.state.settings.bbNextAlign === 'v' ? tagPos.y + tagPos.height : tagPos.y
-      }
-      if (y >= 1) {
-        // outside screen vertically, go to next column
-        x = tagPos.x + tagPos.width
-        y = 0
-      }
-      if (x >= 1) {
-        // Still outside screen? go to top left corner
-        x = 0
-        y = 0
-      }
-      width = tagPos.width
-      height = tagPos.height
+    var x, y, width, height
+
+    // Is there a previous bbox with this label?
+    if (lastTagPos[label]) {
+      // If a bbox with the same label exists, place new bbox next to it
+      ;({ x, y, width, height } = this._calculateNextBBox(lastTagPos[label]))
     } else {
-      // Use default values: no previous tag with same label
+      // First bbox with this label: place it in top left corner, with default w/h configured
       x = 0
       y = 0
       width = this.state.settings.bbWidth / 100
       height = this.state.settings.bbHeight / 100
     }
-    const newTag = {
-      x,
-      y,
-      width,
-      height,
-      label: label,
-      id: tagId
-    }
+    const newTag = { x, y, width, height, label: label, id: tagId }
     lastTagPos[label] = newTag
     this.setState({ lastTagPos }, this.saveState)
     console.log(this.state)
