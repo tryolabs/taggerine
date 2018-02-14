@@ -392,13 +392,15 @@ class Project extends Component {
           onSettingsChange={this.onSettingsChange}
           settings={this.state.settings}
         />
-        <div id="uploaded-list">
-          <ImageList
-            imageList={images}
-            selectedIdx={currentImageIndex}
-            onSelect={this.handleImageSelection}
-          />
-        </div>
+        <Card id="uploaded-list">
+          <CardContent>
+            <ImageList
+              imageList={images}
+              selectedIdx={currentImageIndex}
+              onSelect={this.handleImageSelection}
+            />
+          </CardContent>
+        </Card>
         <div id="tagger">
           <AutoSizer>
             {({ width, height }) => (

@@ -1,3 +1,5 @@
+body {overflow: hidden}
+
 .Project {
   display: grid;
   grid-template-columns: 20% 60% 20%;
@@ -33,6 +35,24 @@
   overflow: auto;
 }
 
+#header {
+  grid-area: header;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #222;
+  color: white;
+
+  padding: 20px;
+}
+
+#uploaded-list {
+  grid-area: uploaded-list;
+  margin: 5px 5px 15px 5px;
+  overflow: auto;
+}
+
 .taglist-cardactions {
   flex-grow: 0;
   justify-content: center;
@@ -58,18 +78,6 @@
   width: 80%;
 }
 
-#header {
-  grid-area: header;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #222;
-  color: white;
-
-  padding: 20px;
-}
-
 .title {
   font-size: 2em;
 }
@@ -93,23 +101,12 @@
   align-self: stretch;
 }
 
-#uploaded-list {
-  grid-area: uploaded-list;
-
-  padding: 0 20px 20px 20px;
-}
-
 #settings {
   grid-area: top-right-side-panel;
 
   padding: 20px;
   min-height: 300px;
 
-}
-
-.image-list {
-  border: solid 2px black;
-  border-radius: 5px;
 }
 
 .list-item {
