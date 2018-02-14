@@ -7,7 +7,6 @@ import Project from './Project'
 import SelectProject from './SelectProject'
 
 import './App.css'
-import 'rc-slider/assets/index.css'
 
 const PROJECT_ID_KEY = 'project_id'
 
