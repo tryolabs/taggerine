@@ -66,49 +66,51 @@ const ANCHOR_NAMES = {
 const updateBoundingBox = (activeAnchor, onUpdate) => {
   const group = activeAnchor.getParent()
 
-  const topLeft = group.get(`.${ANCHOR_NAMES.topLeft}`)[0]
   const topRight = group.get(`.${ANCHOR_NAMES.topRight}`)[0]
   const bottomRight = group.get(`.${ANCHOR_NAMES.bottomRight}`)[0]
   const bottomLeft = group.get(`.${ANCHOR_NAMES.bottomLeft}`)[0]
   const rect = group.get('Rect')[0]
-  const label = group.get('Label')[0]
 
-  const anchorX = activeAnchor.getX()
-  const anchorY = activeAnchor.getY()
+  const deltaX = activeAnchor.x()
+  const deltaY = activeAnchor.y()
+  const anchorName = activeAnchor.name()
 
-  // update anchor positions
-  switch (activeAnchor.getName()) {
+  let width
+  if (anchorName === ANCHOR_NAMES.topLeft || anchorName === ANCHOR_NAMES.bottomLeft)
+    width = topRight.x() - deltaX
+  else width = deltaX
+
+  let height
+  if (anchorName === ANCHOR_NAMES.topLeft || anchorName === ANCHOR_NAMES.topRight)
+    height = bottomRight.y() - deltaY
+  else height = deltaY
+
+  topRight.position({ x: width, y: 0 })
+  bottomLeft.position({ x: 0, y: height })
+  bottomRight.position({ x: width, y: height })
+
+  rect.size({ width, height })
+  group.size({ width, height })
+
+  let { x, y } = group.position()
+
+  switch (anchorName) {
     case ANCHOR_NAMES.topLeft:
-      topRight.setY(anchorY)
-      bottomLeft.setX(anchorX)
-      break
-    case ANCHOR_NAMES.topRight:
-      topLeft.setY(anchorY)
-      bottomRight.setX(anchorX)
-      break
-    case ANCHOR_NAMES.bottomRight:
-      bottomLeft.setY(anchorY)
-      topRight.setX(anchorX)
+      x += deltaX
+      y += deltaY
       break
     case ANCHOR_NAMES.bottomLeft:
-      bottomRight.setY(anchorY)
-      topLeft.setX(anchorX)
+      x += deltaX
+      break
+    case ANCHOR_NAMES.topRight:
+      y += deltaY
       break
     default:
       break
   }
 
-  const { x, y } = topLeft.position()
+  group.position({ x, y })
 
-  rect.position({ x, y })
-  label.position({ x: x + LABEL_DEFAULTS.xOffset, y: y + LABEL_DEFAULTS.yOffset })
-
-  const width = topRight.getX() - topLeft.getX()
-  const height = bottomLeft.getY() - topLeft.getY()
-  if (width && height) {
-    rect.width(width)
-    rect.height(height)
-  }
   onUpdate({ x, y, width, height })
 }
 
@@ -182,20 +184,7 @@ const createBoundingBox = (
       this.moveToTop()
     })
     anchor.on('dragend', function() {
-      const layer = this.getLayer()
       group.setDraggable(true)
-      group.x(group.x() + rect.x())
-      group.y(group.y() + rect.y())
-      layer.draw()
-      onDragEnd({
-        id: id,
-        name: text,
-        x: group.x(),
-        y: group.y(),
-        width: rect.width(),
-        height: rect.height()
-      })
-      layer.draw()
     })
   })
 
@@ -216,16 +205,14 @@ const createBoundingBox = (
   })
 
   group.on('dragend', function() {
-    if (rect.width() === group.width() || rect.height() === group.height()) {
-      onDragEnd({
-        id,
-        name: text,
-        x: group.x(),
-        y: group.y(),
-        width: group.width(),
-        height: group.height()
-      })
-    }
+    onDragEnd({
+      id,
+      label: text,
+      x: group.x(),
+      y: group.y(),
+      width: group.width(),
+      height: group.height()
+    })
   })
 
   const label = createLabel({ text: text, color })

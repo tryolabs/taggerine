@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import Konva from 'konva'
 
 import { createBoundingBox } from './utils'
@@ -7,13 +8,19 @@ import './Tagger.css'
 
 class Tagger extends React.Component {
   addBoundingBoxes = () => {
-    this.props.tags.forEach(({ x, y, width, height, name, id }) => {
-      const boundingBox = createBoundingBox(
-        { x: x*this._image.width(),y: y*this._image.height(), width: width*this._image.width(),
-          height: height*this._image.height(), text: name, id },
-        this.rearrengeBoundingBoxes,
-        this.updateTag
-      )
+    Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
+    this._boundingBoxes = {}
+
+    this.props.image.tags.forEach(({ x, y, width, height, label, id }) => {
+      const boxAttr = {
+        x: x * this._image.width(),
+        y: y * this._image.height(),
+        width: width * this._image.width(),
+        height: height * this._image.height(),
+        text: label,
+        id
+      }
+      const boundingBox = createBoundingBox(boxAttr, this.rearrengeBoundingBoxes, this.boxDragEnd)
       this._layer.add(boundingBox)
       this._boundingBoxes[id] = boundingBox
     })
@@ -24,33 +31,34 @@ class Tagger extends React.Component {
   rearrengeBoundingBoxes = () => {
     const boundingBoxes = Object.values(this._boundingBoxes)
     boundingBoxes.sort((a, b) => {
-      return (b.height() * b.width()) - (a.height() * a.width())
+      return b.height() * b.width() - a.height() * a.width()
     })
     boundingBoxes.forEach((boundingBox, index) => {
       boundingBox.setZIndex(index + 1)
     })
   }
 
-  updateTag = (unconvertedObject) => {
-    const convertedObject = {
-      x: unconvertedObject.x/this._image.width(),
-      y: unconvertedObject.y/this._image.height(),
-      width: unconvertedObject.width/this._image.width(),
-      height: unconvertedObject.height/this._image.height(),
-      id: unconvertedObject.id,
-      name: unconvertedObject.name
+  boxDragEnd = box => {
+    const tag = {
+      x: box.x / this._image.width(),
+      y: box.y / this._image.height(),
+      width: box.width / this._image.width(),
+      height: box.height / this._image.height(),
+      id: box.id,
+      label: box.label
     }
-    this.props.updateTag(convertedObject)
+    this.props.onTagMove(tag)
   }
 
   addImage() {
-    var img = new Image()
-    img.onload = e => {
-      const height = img.height
-      const width = img.width
+    if (Boolean(this._image)) this._image.destroy()
 
-      const heightScaleFactor = this.props.height / img.height
-      const widthScaleFactor = this.props.width / img.width
+    Konva.Image.fromURL(this.props.image.url, konvaImage => {
+      const height = konvaImage.height()
+      const width = konvaImage.width()
+
+      const heightScaleFactor = this.props.height / height
+      const widthScaleFactor = this.props.width / width
       const scaleFactor =
         heightScaleFactor < widthScaleFactor ? heightScaleFactor : widthScaleFactor
 
@@ -59,19 +67,15 @@ class Tagger extends React.Component {
 
       this._stage.height(newHeight)
       this._stage.width(newWidth)
-      this._image = new Konva.Image({
-        x: 0,
-        y: 0,
-        image: img,
-        width: newWidth,
-        height: newHeight
-      })
-      // add the shape to the layer
+
+      this._image = konvaImage
+      this._image.position({ x: 0, y: 0 })
+      this._image.size({ width: newWidth, height: newHeight })
+
       this._layer.add(this._image)
       this._image.setZIndex(0)
       this.addBoundingBoxes()
-    }
-    img.src = this.props.image
+    })
   }
 
   componentDidMount() {
@@ -84,28 +88,19 @@ class Tagger extends React.Component {
     this._layer = new Konva.Layer()
     this._stage.add(this._layer)
 
-    this.addImage()
-
     this._boundingBoxes = {}
+    this.addImage()
   }
 
   componentDidUpdate(prevProps) {
     if (
-      prevProps.image !== this.props.image ||
-      prevProps.width !== this.props.width ||
-      prevProps.height !== this.props.height
+      (prevProps.image.name !== this.props.image.name ||
+        prevProps.width !== this.props.width ||
+        prevProps.height !== this.props.height) &&
+      Boolean(this._image)
     ) {
-      this._image.remove()
-
-      Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
-      this._boundingBoxes = {}
-
       this.addImage()
-    } else if (prevProps.tags !== this.props.tags) {
-      Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
-      this._boundingBoxes = {}
-      this.addBoundingBoxes()
-    }
+    } else if (Boolean(this._image)) this.addBoundingBoxes()
   }
 
   render() {
@@ -115,6 +110,13 @@ class Tagger extends React.Component {
       </div>
     )
   }
+}
+
+Tagger.propTypes = {
+  onTagMove: PropTypes.func,
+  image: PropTypes.object,
+  width: PropTypes.number,
+  height: PropTypes.number
 }
 
 export default Tagger

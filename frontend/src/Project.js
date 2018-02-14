@@ -1,98 +1,44 @@
 import React, { Component } from 'react'
-import { AutoSizer, List } from 'react-virtualized'
+import { AutoSizer } from 'react-virtualized'
 
+import saveAs from 'js-file-download'
 import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
+import ImageTagList from './ImageTagList'
+import DialogHelper from './Dialogs/DialogHelper'
+import ImageList from './ImageList'
+import RecentTagList from './RecentTagList'
 import Tagger from './Tagger'
-import ImageUploader from './ImageUploader'
-import UploadTags from './UploadTags'
-import TrashIcon from 'react-icons/lib/fa/trash'
-import RepeatIcon from 'react-icons/lib/fa/repeat'
-import DownloadIcon from 'react-icons/lib/fa/download'
-import ArrowRightIcon from 'react-icons/lib/fa/arrow-right'
-import ArrowLeftIcon from 'react-icons/lib/fa/arrow-left'
-import CheckIcon from 'react-icons/lib/fa/check'
-import CogIcon from 'react-icons/lib/fa/cog'
-import Slider, { createSliderWithTooltip } from 'rc-slider'
 import axios from 'axios'
 
-import './Project.css'
+import Button from 'material-ui/Button'
+import Card, { CardActions, CardContent } from 'material-ui/Card'
 
-const DEFAULT_HEIGHT = 0.14
-const DEFAULT_WIDTH = 0.14
-const DEFAULT_TAG_VALUE = 'xywh'
+import AddIcon from 'material-ui-icons/Add'
+import ClearIcon from 'material-ui-icons/Clear'
+
+import './Project.css'
+import Header from './Header'
+
 const PRECISION_ERROR = '0.000001'
 const API_URL = process.env.REACT_APP_API_URL
 
 let tagId = 0
 
-function getImageUrl(projectId, imageName) {
-  return `${API_URL}/projects/${projectId}/images/${imageName}`
-}
-
-function getThumbnailUrl(projectId, imageName) {
-  return `${API_URL}/projects/${projectId}/images/thumbnail/${imageName}`
-}
-
-function percentFormatter(v) {
-  return `${v} %`
-}
-
-const SliderWithTooltip = createSliderWithTooltip(Slider)
-
-const getCurrentImage = state => {
-  const currentImage = state.images.length ? state.images[state.currentImageIndex] : undefined
-  return currentImage
-}
-
-const getImageTags = (state, imageName) => {
-  return state.tags[imageName] || {}
-}
-
-const getImageTagsAsList = (state, imageName) =>
-  Object.entries(getImageTags(state, imageName))
-    .sort(([aId], [bId]) => aId - bId)
-    .map(([id, tag]) => ({
-      ...tag,
-      id
-    }))
-
-const getRecentTags = state => {
-  const recentTags = new Set()
-  const currentImage = getCurrentImage(state)
-  if (currentImage) {
-    const tags = { ...state.tags }
-    delete tags[currentImage]
-    Object.values(tags).forEach(imageTagsObj => {
-      Object.values(imageTagsObj).forEach(tag => recentTags.add(tag.name))
-    })
-  }
-  return Array.from(recentTags)
-}
-
-const isImageProcessed = (state, imageName) => {
-  return imageName in state.tags && !!Object.keys(state.tags[imageName]).length
-}
-
-const countTaggedImages = state => {
-  return Object.keys(state.images).reduce((accumulator, currentTag) => {
-    if (isImageProcessed(state, currentTag)) {
-      accumulator += 1
-    }
-    return accumulator
-  }, 0)
-}
-
 class Project extends Component {
   state = {
     images: [],
     totalImages: 0,
-    tags: {},
+    tags: [],
     currentImageIndex: 0,
-    showSettings: false,
+    lastTagPos: {},
     tagFormat: 'xywh',
-    bbWidth: 0.14,
-    bbHeight: 0.14
+    showDeleteImageTagsDialog: false,
+    settings: {
+      bbWidth: 14,
+      bbHeight: 14,
+      bbNextAlign: 'h'
+    }
   }
 
   saveState = () => saveToLocalStorage({ ...this.state, tagId })
@@ -154,343 +100,262 @@ class Project extends Component {
     return result
   }
 
-  _addXYWHTags = (tags, fileName, newTags) => {
-    if (fileName in tags) {
-      newTags.forEach(bbox => {
-        let obj = Object.values(tags[fileName]).find(obj => {
+  _mergeTags = (newTags, oldTags) => {
+    const format = this._tagFormat(newTags)
+    return newTags.map(newTag => {
+      const tag = oldTags.find(oldTag => {
+        if (oldTag.name !== newTag.label) return false
+        if (format === 'xywh') {
           return (
-            obj.x === bbox.x &&
-            obj.y === bbox.y &&
-            obj.name === bbox.label &&
-            obj.width === bbox.width &&
-            obj.height === bbox.height
+            oldTag.x === newTag.x &&
+            oldTag.y === newTag.y &&
+            oldTag.width === newTag.width &&
+            oldTag.height === newTag.height
           )
-        })
-        if (!obj) {
-          let id = tagId
-          tagId += 1
-          bbox.id = id
-          bbox.name = bbox.label
-          delete bbox.label
-          tags[fileName][id] = bbox
+        } else {
+          return (
+            oldTag.x === newTag.x_min &&
+            oldTag.y === newTag.y_min &&
+            Math.abs(newTag.x_max - newTag.x_min - oldTag.width) < PRECISION_ERROR &&
+            Math.abs(newTag.y_max - newTag.y_min - oldTag.height) < PRECISION_ERROR
+          )
         }
       })
-    } else {
-      tags[fileName] = {}
-      newTags.forEach(bbox => {
+
+      if (Boolean(tag)) return tag
+      else {
         let id = tagId
         tagId += 1
-        bbox.id = id
-        bbox.name = bbox.label
-        delete bbox.label
-        tags[fileName][id] = bbox
-      })
-    }
+        if (format === 'xyxy') this._XYXYFormatToXYWH(tagId, newTag)
+        else newTag.id = id
+        return newTag
+      }
+    })
   }
 
   _XYXYFormatToXYWH = (id, bbox) => {
-    tagId += 1
     bbox.id = id
-    bbox.name = bbox.label
     bbox.x = bbox.x_min
     bbox.y = bbox.y_min
     bbox.width = bbox.x_max - bbox.x_min
     bbox.height = bbox.y_max - bbox.y_min
-    delete bbox.label
     delete bbox.x_min
     delete bbox.y_min
     delete bbox.y_max
     delete bbox.y_min
   }
 
-  _addXYXYTags = (tags, fileName, newTags) => {
-    if (fileName in tags) {
-      newTags.forEach(bbox => {
-        let obj = Object.values(tags[fileName]).find(obj => {
-          return (
-            obj.x === bbox.x_min &&
-            obj.y === bbox.y_min &&
-            obj.name === bbox.label &&
-            Math.abs(bbox.x_max - bbox.x_min - obj.width) < PRECISION_ERROR &&
-            Math.abs(bbox.y_max - bbox.y_min - obj.height) < PRECISION_ERROR
-          )
-        })
-        if (!obj) {
-          let id = tagId
-          this._XYXYFormatToXYWH(id, bbox)
-          tags[fileName][id] = bbox
-        }
-      })
+  /*
+   * Calculate next bb position and size from previous bbox's values
+   * Placement of next bbox can be configured to be vertically or horizontally aligned (bbNextAlign)
+   * If canvas edges are reached, go to next row/column, or restart from top left corner.
+   */
+  _calculateNextBBox(tagPos) {
+    var x, y, width, height
+
+    x = this.state.settings.bbNextAlign === 'h' ? tagPos.x + tagPos.width : tagPos.x
+    if (x + tagPos.width >= 1) {
+      // outside screen horizontally, go to next row
+      x = 0
+      y = tagPos.y + tagPos.height
     } else {
-      tags[fileName] = {}
-      newTags.forEach(bbox => {
-        let id = tagId
-        this._XYXYFormatToXYWH(id, bbox)
-        tags[fileName][id] = bbox
-      })
+      y = this.state.settings.bbNextAlign === 'v' ? tagPos.y + tagPos.height : tagPos.y
     }
+    if (y + tagPos.height >= 1) {
+      // outside screen vertically, go to next column
+      x = tagPos.x + tagPos.width
+      y = 0
+    }
+    if (x + tagPos.width >= 1) {
+      // Still outside screen? go to top left corner
+      x = 0
+      y = 0
+    }
+    width = tagPos.width
+    height = tagPos.height
+    return { x, y, width, height }
   }
 
   uploadTags = tagFile => {
-    let tags = { ...this.state.tags }
-    let newTags = {}
     let reader = new FileReader()
     reader.onload = e => {
-      let data = JSON.parse(e.target.result)
-      let entries = Object.entries(data)
-      newTags = entries.reduce((acc, [key, value]) => {
-        if (this._tagFormat(value) === 'xywh') {
-          this._addXYWHTags(acc, key, value)
-        } else {
-          this._addXYXYTags(acc, key, value)
-        }
-        return acc
-      }, tags)
-      this.setState({ tags: newTags }, this.saveState)
+      let tags = []
+      const uploadedTags = JSON.parse(e.target.result)
+      const images = this.state.images.map(image => {
+        const newTags = uploadedTags[image.name]
+        if (Boolean(newTags)) {
+          tags = [...new Set([...tags, ...newTags.map(t => t.label)])]
+          return { ...image, tags: this._mergeTags(newTags, image.tags) }
+        } else return image
+      })
+      this.setState({ images, tags }, this.saveState)
     }
     reader.readAsText(tagFile)
   }
 
-  _changeCurrentImage = imageName => {
-    this.setState(prevState => {
-      return {
-        currentImageIndex: prevState.images.indexOf(imageName)
-      }
-    })
-  }
-
-  addTag = () => {
-    const id = tagId
-    tagId += 1
-
-    this.setState(prevState => {
-      const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage.name)
-      const newTag = {
-        x: 0.14,
-        y: 0.14,
-        name: `tag${id}`,
-        id,
-        width: this.state.bbWidth,
-        height: this.state.bbHeight
-      }
-      return {
-        tags: {
-          ...prevState.tags,
-          [currentImage]: {
-            ...currentImageTags,
-            [id]: newTag
-          }
-        }
-      }
-    }, this.saveState)
-  }
-
-  repeatTag = name => {
-    const id = tagId
-    const newTag = {
-      x: 0.14,
-      y: 0.14,
-      name: `tag${id}`,
-      id,
-      width: this.state.bbWidth,
-      height: this.state.bbHeight
-    }
-    tagId += 1
-
-    this.setState(prevState => {
-      const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage)
-
-      return {
-        tags: {
-          ...prevState.tags,
-          [currentImage]: {
-            ...currentImageTags,
-            [id]: { ...newTag, id, name }
-          }
-        }
-      }
-    }, this.saveState)
-  }
-
-  updateTag = tag => {
-    this.setState(prevState => {
-      const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage)
-
-      return {
-        tags: {
-          ...prevState.tags,
-          [currentImage]: { ...currentImageTags, [tag.id]: tag }
-        }
-      }
-    }, this.saveState)
-  }
-
-  removeTag = id => {
-    this.setState(prevState => {
-      const currentImage = getCurrentImage(prevState)
-      const currentImageTags = getImageTags(prevState, currentImage)
-
-      delete currentImageTags[id]
-
-      return {
-        tags: {
-          ...prevState.tags,
-          [currentImage]: { ...currentImageTags }
-        }
-      }
-    }, this.saveState)
-  }
-
-  removeCurrentTags = () => {
-    this.setState(prevState => {
-      const currentImage = getCurrentImage(prevState)
-      const tags = prevState.tags
-      delete tags[currentImage]
-      return {
-        tags: tags
-      }
-    }, this.saveState)
-  }
-
-  _uploadedListRowRenderer = ({ index, key, style }) => {
-    const imageName = this.state.images[index]
-    const currentImage = getCurrentImage(this.state)
-    const isCurrentImage = imageName === currentImage
-    const isProcessed = isImageProcessed(this.state, imageName)
-    return (
-      <div key={key} style={style}>
-        <div
-          className={isCurrentImage ? 'list-item selected-image-row' : 'list-item'}
-          onClick={() => this._changeCurrentImage(imageName)}
-        >
-          <div className="image-item">
-            <img
-              className="thumbnail"
-              src={getThumbnailUrl(this.props.match.params.project_id, imageName)}
-              alt={imageName}
-            />
-            <span className="image-item-name">{imageName}</span>
-          </div>
-          {isProcessed ? (
-            <div className="image-item">
-              <CheckIcon />
-            </div>
-          ) : null}
-        </div>
-      </div>
-    )
-  }
-
-  _tagListRowRenderer = ({ index, key, style }) => {
-    const imageName = getCurrentImage(this.state)
-    const tagList = getImageTagsAsList(this.state, imageName)
-    const tag = tagList[index]
-    return (
-      <div className="tag-item" key={`${imageName}-${key}`} style={style}>
-        <input
-          type="text"
-          defaultValue={tag.name}
-          onChange={e => this.updateTag({ ...tag, name: e.target.value })}
-        />
-        <button className="tag-button" onClick={() => this.repeatTag(tag.name)}>
-          {' '}
-          <RepeatIcon />
-        </button>
-        <button className="tag-button" onClick={() => this.removeTag(tag.id)}>
-          {' '}
-          <TrashIcon />
-        </button>
-      </div>
-    )
-  }
-
-  _recentTagListRowRenderer = ({ index, key, style }) => {
-    const recentTagList = getRecentTags(this.state)
-    const tag = recentTagList[index]
-    return (
-      <div className="recentTag list-item" key={key} style={style}>
-        <a className="button button-link" onClick={() => this.repeatTag(tag)}>
-          {tag}
-        </a>
-      </div>
-    )
-  }
-
-  _generateDownloadFile = () => {
-    const entries = Object.entries(this.state.tags)
-    const toDownload = entries.reduce((acc, [key, value]) => {
-      let values = Object.values(value)
-      let data
-      if (this.state.tagFormat !== 'xywh') {
-        data = values.map(({ x, y, width, height, id, name }) => ({
+  downloadTags = format => {
+    const xywh = format.toUpperCase() === 'XYWH'
+    const toDownload = this.state.images.reduce((acc, image) => {
+      let data = image.tags
+      if (xywh) {
+        data = image.tags.map(({ x, y, width, height, id, label }) => ({
           x_min: x,
           y_min: y,
           x_max: x + width,
           y_max: y + height,
-          label: name
-        }))
-      } else {
-        data = values.map(({ x, y, width, height, id, name }) => ({
-          x,
-          y,
-          width,
-          height,
-          label: name
+          label
         }))
       }
-      return { ...acc, [key]: data }
+      return { ...acc, [image.name]: data }
     }, {})
-    return JSON.stringify(toDownload)
+    const content = JSON.stringify(toDownload)
+    saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
   }
 
-  _cleanAllTags = e => {
-    this.setState(() => {
-      tagId = 0
-      return { tags: {} }
-    }, this.saveState)
+  generateTagList = images => {
+    let tags = new Set()
+    images.forEach(image => image.tags.forEach(tag => tags.add(tag.label)))
+    return [...tags]
   }
 
-  handleTagFormatChange = changeEvent => {
-    this.setState({
-      tagFormat: changeEvent.target.value
-    })
+  addTag = () => {
+    this.repeatTag(`tag${tagId}`)
   }
 
-  handleWidthBBChange = value => {
-    this.setState({
-      bbWidth: value / 100
-    })
+  repeatTag = label => {
+    let lastTagPos = this.state.lastTagPos
+    var x, y, width, height
+
+    // Is there a previous bbox with this label?
+    if (lastTagPos[label]) {
+      // If a bbox with the same label exists, place new bbox next to it
+      ;({ x, y, width, height } = this._calculateNextBBox(lastTagPos[label]))
+    } else {
+      // First bbox with this label: place it in top left corner, with default w/h configured
+      x = 0
+      y = 0
+      width = this.state.settings.bbWidth / 100
+      height = this.state.settings.bbHeight / 100
+    }
+    const newTag = { x, y, width, height, label: label, id: tagId }
+    lastTagPos[label] = newTag
+    this.setState({ lastTagPos }, this.saveState)
+    console.log(this.state)
+    tagId += 1
+
+    const images = [...this.state.images]
+    const newImage = images[this.state.currentImageIndex]
+    images[this.state.currentImageIndex] = { ...newImage, tags: [...newImage.tags, newTag] }
+
+    const tags = this.generateTagList(images)
+
+    this.setState({ images, tags }, this.saveState)
   }
 
-  handleHeightBBChange = value => {
-    this.setState({
-      bbHeight: value / 100
-    })
+  updateTag = tag => {
+    const { images, currentImageIndex } = this.state
+    const imageTags = [...images[currentImageIndex].tags]
+    const tagIdx = imageTags.findIndex(t => t.id === tag.id)
+    imageTags[tagIdx] = tag
+
+    const newImages = [...images]
+    newImages[currentImageIndex].tags = imageTags
+
+    const tags = this.generateTagList(newImages)
+
+    const lastTagPos = this.state.lastTagPos
+    lastTagPos[tag.label] = tag
+
+    this.setState({ images: newImages, tags, lastTagPos }, this.saveState)
+  }
+
+  updateTagLabel = (tagIdx, label) => {
+    const { images, currentImageIndex } = this.state
+    const image = images[currentImageIndex]
+
+    const newTag = { ...image.tags[tagIdx], label }
+    const newTags = [...image.tags]
+    newTags[tagIdx] = newTag
+    const newImage = { ...image, tags: newTags }
+    const newImages = [...images]
+    newImages[currentImageIndex] = newImage
+
+    const tags = this.generateTagList(newImages)
+
+    // Update information of last block for the new label
+    const lastTagPos = this.state.lastTagPos
+    lastTagPos[label] = newTag
+
+    this.setState({ images: newImages, tags, lastTagPos }, this.saveState)
+  }
+
+  removeTag = id => {
+    const { images, currentImageIndex } = this.state
+    const imageTags = [...images[currentImageIndex].tags].filter(t => t.id !== id)
+
+    const newImages = [...this.state.images]
+    newImages[currentImageIndex].tags = imageTags
+
+    const tags = this.generateTagList(newImages)
+
+    this.setState({ images: newImages, tags }, this.saveState)
+  }
+
+  cleanAllTags = e => {
+    const tags = []
+    const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
+    this.setState({ images, tags }, this.saveState)
   }
 
   getImages = () => {
     const projectId = this.props.match.params.project_id
-    return axios.get(`${API_URL}/projects/${projectId}/images`).then(response => {
+    const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
+
+    return axios.get(imagesAPIURL).then(response => {
       this.setState(prevState => {
-        const images = [...new Set([...prevState.images, ...response.data.images])]
-        const imageNames = images.sort((aImg, bImg) => {
-          return aImg.localeCompare(bImg)
-        })
-        return { 
-          images: imageNames,
-          totalImages:  response.data.total_images}
+        const images = [...new Set([...prevState.images.map(i => i.name), ...response.data.images])]
+          .sort((aImg, bImg) => {
+            return aImg.localeCompare(bImg)
+          })
+          .map(imageName => ({
+            name: imageName,
+            url: `${imagesAPIURL}/${imageName}`,
+            thumbnailURL: `${imagesAPIURL}/thumbnail/${imageName}`,
+            tags: []
+          }))
+
+        return {
+          images,
+          totalImages: response.data.total_images
+        }
       })
     })
   }
-  resetSettings = () => {
-    this.setState({
-      bbHeight: DEFAULT_HEIGHT,
-      bbWidth: DEFAULT_WIDTH,
-      tagFormat: DEFAULT_TAG_VALUE
-    })
+
+  handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
+
+  onSettingsChange = newSettings => {
+    this.setState({ settings: newSettings }, this.saveState)
+    console.log(newSettings)
+  }
+
+  showDeleteImageTagsDialog = () => {
+    this.setState({ showDeleteImageTagsDialog: true })
+  }
+
+  confirmDeleteImageTags = confirmed => {
+    this.setState({ showDeleteImageTagsDialog: false })
+    if (confirmed) {
+      const { images, currentImageIndex } = this.state
+      const image = images[currentImageIndex]
+      const newImage = { ...image, tags: [] }
+      const newImages = [...images]
+      newImages[currentImageIndex] = newImage
+
+      const tags = this.generateTagList(newImages)
+
+      this.setState({ images: newImages, tags }, this.saveState)
+    }
   }
 
   componentWillMount() {
@@ -518,204 +383,81 @@ class Project extends Component {
   }
 
   render() {
-    const projectId = this.props.match.params.project_id
-    const currentImage = getCurrentImage(this.state)
-    const currentImageTags = currentImage ? getImageTagsAsList(this.state, currentImage) : []
-    const recentTags = getRecentTags(this.state)
-    const imageNames = this.state.images
+    const { images, currentImageIndex, tags } = this.state
+    const currentImage = images[currentImageIndex]
+    const currentImageTags = currentImage ? currentImage.tags : []
 
     return (
       <div className="Project">
-        <header id="header">
-          <h1 className="title">{'\uD83C\uDF4A'} Taggerine</h1>
-          <button
-            onClick={() => this.setState(prevState => ({ showSettings: !prevState.showSettings }))}
-          >
-            <CogIcon size={24} color="white" />
-          </button>
-        </header>
-        <div id="uploader">
-          <ImageUploader uploadImages={this.uploadImages} />
-          <span className="image-counter">
-            {countTaggedImages(this.state)}/{this.state.images.length} images
-          </span>
-        </div>
-        <div id="uploaded-list">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                overscanRowCount={10}
-                noRowsRenderer={() => <div className="image-list-empty">No files</div>}
-                rowCount={this.state.images.length}
-                rowHeight={130}
-                rowRenderer={this._uploadedListRowRenderer}
-                width={width}
-                height={height}
-                className="image-list"
-              />
-            )}
-          </AutoSizer>
-        </div>
+        <Header
+          onUploadImage={this.uploadImages}
+          onImportTags={this.uploadTags}
+          onExportTags={this.downloadTags}
+          onDelete={this.cleanAllTags}
+          onSettingsChange={this.onSettingsChange}
+          settings={this.state.settings}
+        />
+        <Card id="uploaded-list">
+          <CardContent>
+            <ImageList
+              imageList={images}
+              selectedIdx={currentImageIndex}
+              onSelect={this.handleImageSelection}
+            />
+          </CardContent>
+        </Card>
         <div id="tagger">
           <AutoSizer>
             {({ width, height }) => (
               <div style={{ width, height }} className="autosized-tagger">
-                <button onClick={this.prevImage} disabled={imageNames.length <= 1}>
-                  <ArrowLeftIcon />
-                </button>
                 {currentImage && (
                   <Tagger
-                    image={getImageUrl(projectId, currentImage)}
-                    tags={currentImageTags}
-                    updateTag={this.updateTag}
+                    image={currentImage}
+                    onTagMove={this.updateTag}
                     width={width - 60}
                     height={height}
                   />
                 )}
-                <button onClick={this.nextImage} disabled={imageNames.length <= 1}>
-                  <ArrowRightIcon />
-                </button>
               </div>
             )}
           </AutoSizer>
         </div>
-        {!this.state.showSettings && (
-          <div id="recent-tags">
-            <AutoSizer>
-              {({ width, height }) => (
-                <List
-                  overscanRowCount={10}
-                  noRowsRenderer={() => <div className="tag-list-empty">No recent tags</div>}
-                  rowCount={recentTags.length}
-                  rowHeight={50}
-                  rowRenderer={this._recentTagListRowRenderer}
-                  width={width}
-                  height={height}
-                  className="inner-top-right-pannel"
-                />
-              )}
-            </AutoSizer>
-          </div>
-        )}
-        {this.state.showSettings && (
-          <div id="settings">
-            <div id="settings-container" className="inner-top-right-pannel">
-              <div id="settings-header">Settings</div>
-              <div id="settings-content">
-                <div id="tag-format">
-                  <span>Select you tag format for download: </span>
-                  <div className="radio">
-                    <label>
-                      <input
-                        type="radio"
-                        value="xywh"
-                        onChange={this.handleTagFormatChange}
-                        checked={this.state.tagFormat === 'xywh'}
-                      />
-                      (x, y, width, height)
-                    </label>
-                  </div>
-                  <div className="radio">
-                    <label>
-                      <input
-                        type="radio"
-                        value="xyxy"
-                        onChange={this.handleTagFormatChange}
-                        checked={this.state.tagFormat === 'xyxy'}
-                      />
-                      (x_min, y_min, x_max, y_max)
-                    </label>
-                  </div>
-                </div>
-                <div id="bounding-box-size">
-                  <div id="width-container">
-                    <span>Bounding box width:</span>
-                    <div className="slider-container">
-                      <SliderWithTooltip
-                        value={this.state.bbWidth * 100}
-                        tipFormatter={percentFormatter}
-                        onChange={this.handleWidthBBChange}
-                      />
-                    </div>
-                  </div>
-                  <div id="height-container">
-                    <span>Bounding box height:</span>
-                    <div className="slider-container">
-                      <SliderWithTooltip
-                        value={this.state.bbHeight * 100}
-                        tipFormatter={percentFormatter}
-                        onChange={this.handleHeightBBChange}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div id="bounding-box-buttons">
-                  <button className="button" onClick={this.resetSettings}>
-                    Reset
-                  </button>
-                  <button
-                    className="button second-button"
-                    onClick={() =>
-                      this.setState(prevState => ({ showSettings: !prevState.showSettings }))
-                    }
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        <div id="tag-actions">
-          <button className="button" onClick={this.addTag} key={0} disabled={!imageNames.length}>
-            Add Bounding Box
-          </button>
-          <button
-            className="button second-button"
-            onClick={this.removeCurrentTags}
-            key={1}
-            disabled={!currentImageTags.length}
-          >
-            <TrashIcon /> Remove Bounding Boxes
-          </button>
-        </div>
-        <div id="tags">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                key={2}
-                overscanRowCount={10}
-                noRowsRenderer={() => <div className="tag-list-empty">No tags</div>}
-                rowCount={currentImageTags.length}
-                rowHeight={50}
-                rowRenderer={this._tagListRowRenderer}
-                width={width}
-                height={height}
-                className="tag-list"
-              />
-            )}
-          </AutoSizer>
-        </div>
-        <footer id="footer">
-          <a
-            id="download"
-            className="button button-link"
-            download="tags.json"
-            href={`data:application/json;charset=utf-8,${encodeURIComponent(
-              this._generateDownloadFile()
-            )}`}
-          >
-            <DownloadIcon /> Download Tags
-          </a>
-          <UploadTags uploadTags={this.uploadTags} />
-          <a
-            id="clean-tags"
-            className="button button-link second-button"
-            onClick={this._cleanAllTags}
-          >
-            <TrashIcon /> Clean tags
-          </a>
-        </footer>
+        <Card id="taglist-recentlist">
+          <CardContent className="taglist-cardcontent">
+            <RecentTagList tagList={tags} onSelect={this.repeatTag} />
+          </CardContent>
+          <CardActions className="taglist-cardactions">
+            <Button color="primary" onClick={this.addTag} disabled={!images.length}>
+              <AddIcon />
+            </Button>
+          </CardActions>
+        </Card>
+        <Card id="taglist-imagetags">
+          <CardContent className="taglist-cardcontent">
+            <ImageTagList
+              imageTags={currentImageTags}
+              onTagLabelChange={this.updateTagLabel}
+              onRepeatTag={this.repeatTag}
+              onRemoveTag={this.removeTag}
+            />
+          </CardContent>
+          <CardActions className="taglist-cardactions">
+            <Button
+              color="primary"
+              onClick={this.showDeleteImageTagsDialog}
+              disabled={!currentImageTags.length}
+            >
+              <ClearIcon />
+            </Button>
+            <DialogHelper
+              open={this.state.showDeleteImageTagsDialog}
+              title="Delete all tags from this image?"
+              message="Are you sure that you want to delete all bounding boxes from this image? This can't be undone."
+              onConfirm={() => this.confirmDeleteImageTags(true)}
+              onCancel={() => this.confirmDeleteImageTags(false)}
+            />
+          </CardActions>
+        </Card>
       </div>
     )
   }

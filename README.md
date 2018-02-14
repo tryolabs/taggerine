@@ -17,11 +17,10 @@ $ git clone https://github.com/tryolabs/taggerine.git
 $ cd taggerine
 ```
 
-Then go to the `deploy/` directory and create and fill the `.env` files. (You can use the `.env.sample` files as reference)
-
-Finally, use Docker Compose to start the application.
+Finally, use Docker Compose to build and then start the application.
 
 ```
+$ docker-compose build
 $ docker-compose up
 ```
 
