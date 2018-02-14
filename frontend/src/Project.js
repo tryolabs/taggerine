@@ -390,6 +390,22 @@ class Project extends Component {
 
   handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
 
+  handleImageDelete = imageIndex => {
+    var imgName = this.state.images[imageIndex].name
+    const config = {
+      headers: { 'content-type': 'application/x-www-form-urlencoded' }
+    }
+    axios.delete(
+      `${API_URL}/projects/${this.props.match.params.project_id}/images/${imgName}`,
+      {},
+      config
+    )
+
+    var newState = { images: [...this.state.images], totalImages: this.state.totalImages - 1 }
+    newState.images.splice(imageIndex, 1)
+    this.setState(newState)
+  }
+
   onSettingsChange = newSettings => {
     this.setState({ settings: newSettings }, this.saveLocal)
   }
@@ -419,6 +435,7 @@ class Project extends Component {
               imageList={images}
               selectedIdx={currentImageIndex}
               onSelect={this.handleImageSelection}
+              onDelete={this.handleImageDelete}
             />
           </CardContent>
         </Card>

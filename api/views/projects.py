@@ -97,6 +97,17 @@ def get_image(id, imagename):
     return send_file(imagePath)
 
 
+@bp.route('/<project_id>/images/<imagename>', methods=['DELETE'])
+def delete_image(project_id, imagename):
+    project = db.query(Project).filter_by(id=project_id).first()
+    os.remove(os.path.join(UPLOAD_FOLDER, get_project_folder(project), imagename))
+    db.query(Image).\
+        filter((Image.project_id == project_id) & (Image.name == imagename)).\
+        delete()
+    db.commit()
+    return jsonify(status='ok')
+
+
 @bp.route('/<id>/images/thumbnail/<imagename>', methods=['GET'])
 def get_image_thumbnail(id, imagename):
     project = db.query(Project).filter_by(id=id).first()
