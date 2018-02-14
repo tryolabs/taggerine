@@ -6,7 +6,6 @@ import Typography from 'material-ui/Typography'
 import Card, { CardMedia } from 'material-ui/Card'
 import IconButton from 'material-ui/IconButton'
 import Tooltip from 'material-ui/Tooltip'
-import CancelIcon from 'material-ui-icons/Cancel'
 import BeenhereIcon from 'material-ui-icons/Beenhere'
 
 const styles = theme => ({
@@ -41,11 +40,6 @@ const ImageList = ({ imageList, selectedIdx, onSelect, classes }) =>
           <Card className={classes.card} onClick={() => onSelect(index)}>
             <div className={index === selectedIdx ? classes.activeImage : ''}>
               <TaggedIcon display={image.tags.length} classes={classes} />
-              <div className={classes.closeButton}>
-                <IconButton color="secondary">
-                  <CancelIcon />
-                </IconButton>
-              </div>
               <CardMedia image={image.thumbnailURL} className={classes.media} />
             </div>
           </Card>
