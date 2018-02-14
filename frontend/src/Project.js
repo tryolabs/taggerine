@@ -41,7 +41,39 @@ class Project extends Component {
     }
   }
 
-  saveState = () => saveToLocalStorage({ ...this.state, tagId })
+  saveLocal = () =>
+    saveToLocalStorage({ tagFormat: this.state.tagFormat, settings: this.state.settings, tagId })
+
+  loadFromLocal = () => {
+    const loaded = loadFromLocalStorage()
+    if (loaded) {
+      tagId = loaded.tagId
+      delete loaded.tagId
+      this.setState(loaded)
+    }
+  }
+
+  /*
+   * Save tags and images to the API DB
+   */
+  saveToBackend = () => {}
+
+  componentWillMount() {
+    this.loadFromLocal()
+  }
+
+  componentDidMount() {
+    this.getImages().then(() => {
+      let intervalId = setInterval(() => {
+        if (this.state.totalImages > this.state.images.length) {
+          this.getImages()
+        } else {
+          clearInterval(intervalId)
+          intervalId = null
+        }
+      }, 3000)
+    })
+  }
 
   nextImage = () => {
     this.setState(prevState => {
@@ -52,7 +84,7 @@ class Project extends Component {
       return {
         currentImageIndex: currentImageIndex
       }
-    }, this.saveState)
+    }) // avoid saving state here, currentImageIndex is not saved, so this can only hide bugs
   }
 
   prevImage = () => {
@@ -64,7 +96,7 @@ class Project extends Component {
       return {
         currentImageIndex: currentImageIndex
       }
-    }, this.saveState)
+    }) // avoid saving state here, currentImageIndex is not saved, so this can only hide bugs
   }
 
   uploadImages = images => {
@@ -188,7 +220,7 @@ class Project extends Component {
           return { ...image, tags: this._mergeTags(newTags, image.tags) }
         } else return image
       })
-      this.setState({ images, tags }, this.saveState)
+      this.setState({ images, tags })
     }
     reader.readAsText(tagFile)
   }
@@ -239,8 +271,6 @@ class Project extends Component {
     }
     const newTag = { x, y, width, height, label: label, id: tagId }
     lastTagPos[label] = newTag
-    this.setState({ lastTagPos }, this.saveState)
-    console.log(this.state)
     tagId += 1
 
     const images = [...this.state.images]
@@ -249,7 +279,7 @@ class Project extends Component {
 
     const tags = this.generateTagList(images)
 
-    this.setState({ images, tags }, this.saveState)
+    this.setState({ images, tags, lastTagPos })
   }
 
   updateTag = tag => {
@@ -266,7 +296,7 @@ class Project extends Component {
     const lastTagPos = this.state.lastTagPos
     lastTagPos[tag.label] = tag
 
-    this.setState({ images: newImages, tags, lastTagPos }, this.saveState)
+    this.setState({ images: newImages, tags, lastTagPos })
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -286,7 +316,7 @@ class Project extends Component {
     const lastTagPos = this.state.lastTagPos
     lastTagPos[label] = newTag
 
-    this.setState({ images: newImages, tags, lastTagPos }, this.saveState)
+    this.setState({ images: newImages, tags, lastTagPos })
   }
 
   removeTag = id => {
@@ -298,25 +328,34 @@ class Project extends Component {
 
     const tags = this.generateTagList(newImages)
 
-    this.setState({ images: newImages, tags }, this.saveState)
+    this.setState({ images: newImages, tags })
   }
 
   cleanAllTags = e => {
     const tags = []
     const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.setState({ images, tags }, this.saveState)
+    this.setState({ images, tags })
   }
 
+  /*
+   * Fetch all listed image files in API_URL, and mix them with the images saved in the state.
+   * If an image file is not in the current state, load it anyway without tags.
+   */
   getImages = () => {
     const projectId = this.props.match.params.project_id
     const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
 
     return axios.get(imagesAPIURL).then(response => {
       this.setState(prevState => {
-        const images = [...new Set([...prevState.images.map(i => i.name), ...response.data.images])]
+        const images = [
+          // Mix images in the state with those listed in API_URL
+          ...new Set([...prevState.images.map(i => i.name), ...response.data.images])
+        ]
+          // Order image list
           .sort((aImg, bImg) => {
             return aImg.localeCompare(bImg)
           })
+          // Create image objects to save in the state
           .map(imageName => ({
             name: imageName,
             url: `${imagesAPIURL}/${imageName}`,
@@ -335,8 +374,7 @@ class Project extends Component {
   handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
 
   onSettingsChange = newSettings => {
-    this.setState({ settings: newSettings }, this.saveState)
-    console.log(newSettings)
+    this.setState({ settings: newSettings }, this.saveLocal)
   }
 
   showDeleteImageTagsDialog = () => {
@@ -354,32 +392,8 @@ class Project extends Component {
 
       const tags = this.generateTagList(newImages)
 
-      this.setState({ images: newImages, tags }, this.saveState)
+      this.setState({ images: newImages, tags })
     }
-  }
-
-  componentWillMount() {
-    const loaded = loadFromLocalStorage()
-    if (loaded) {
-      tagId = loaded.tagId
-      delete loaded.tagId
-      this.setState(loaded)
-    }
-  }
-
-  componentDidMount() {
-    this.getImages().then(() => {
-      let intervalId = setInterval(() => {
-        if (this.state.totalImages > this.state.images.length) {
-          this.getImages()
-          console.log('ejecuta')
-        } else {
-          clearInterval(intervalId)
-          intervalId = null
-          console.log('termino')
-        }
-      }, 3000)
-    })
   }
 
   render() {
