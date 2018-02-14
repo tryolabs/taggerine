@@ -42,7 +42,12 @@ class Project extends Component {
   }
 
   saveLocal = () =>
-    saveToLocalStorage({ tagFormat: this.state.tagFormat, settings: this.state.settings, tagId })
+    saveToLocalStorage({
+      tags: this.state.tags,
+      tagFormat: this.state.tagFormat,
+      settings: this.state.settings,
+      tagId
+    })
 
   loadFromLocal = () => {
     const loaded = loadFromLocalStorage()
@@ -56,7 +61,16 @@ class Project extends Component {
   /*
    * Save tags and images to the API DB
    */
-  saveToBackend = () => {}
+  saveToBackend = () => {
+    var imgName = this.state.images[this.state.currentImageIndex].name
+    var imgTags = this.state.images[this.state.currentImageIndex].tags
+    var headers: { 'content-type': 'application/json' }
+    axios.post(
+      `${API_URL}/projects/${this.props.match.params.project_id}/image/${imgName}/tags`,
+      imgTags,
+      headers
+    )
+  }
 
   componentWillMount() {
     this.loadFromLocal()
@@ -220,7 +234,7 @@ class Project extends Component {
           return { ...image, tags: this._mergeTags(newTags, image.tags) }
         } else return image
       })
-      this.setState({ images, tags })
+      this.setState({ images, tags }, this.saveToBackend)
     }
     reader.readAsText(tagFile)
   }
@@ -279,7 +293,7 @@ class Project extends Component {
 
     const tags = this.generateTagList(images)
 
-    this.setState({ images, tags, lastTagPos })
+    this.setState({ images, tags, lastTagPos }, this.saveToBackend)
   }
 
   updateTag = tag => {
@@ -296,7 +310,7 @@ class Project extends Component {
     const lastTagPos = this.state.lastTagPos
     lastTagPos[tag.label] = tag
 
-    this.setState({ images: newImages, tags, lastTagPos })
+    this.setState({ images: newImages, tags, lastTagPos }, this.saveToBackend)
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -316,7 +330,7 @@ class Project extends Component {
     const lastTagPos = this.state.lastTagPos
     lastTagPos[label] = newTag
 
-    this.setState({ images: newImages, tags, lastTagPos })
+    this.setState({ images: newImages, tags, lastTagPos }, this.saveToBackend)
   }
 
   removeTag = id => {
@@ -328,57 +342,13 @@ class Project extends Component {
 
     const tags = this.generateTagList(newImages)
 
-    this.setState({ images: newImages, tags })
+    this.setState({ images: newImages, tags }, this.saveToBackend)
   }
 
   cleanAllTags = e => {
     const tags = []
     const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.setState({ images, tags })
-  }
-
-  /*
-   * Fetch all listed image files in API_URL, and mix them with the images saved in the state.
-   * If an image file is not in the current state, load it anyway without tags.
-   */
-  getImages = () => {
-    const projectId = this.props.match.params.project_id
-    const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
-
-    return axios.get(imagesAPIURL).then(response => {
-      this.setState(prevState => {
-        const images = [
-          // Mix images in the state with those listed in API_URL
-          ...new Set([...prevState.images.map(i => i.name), ...response.data.images])
-        ]
-          // Order image list
-          .sort((aImg, bImg) => {
-            return aImg.localeCompare(bImg)
-          })
-          // Create image objects to save in the state
-          .map(imageName => ({
-            name: imageName,
-            url: `${imagesAPIURL}/${imageName}`,
-            thumbnailURL: `${imagesAPIURL}/thumbnail/${imageName}`,
-            tags: []
-          }))
-
-        return {
-          images,
-          totalImages: response.data.total_images
-        }
-      })
-    })
-  }
-
-  handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
-
-  onSettingsChange = newSettings => {
-    this.setState({ settings: newSettings }, this.saveLocal)
-  }
-
-  showDeleteImageTagsDialog = () => {
-    this.setState({ showDeleteImageTagsDialog: true })
+    this.setState({ images, tags }, this.saveToBackend)
   }
 
   confirmDeleteImageTags = confirmed => {
@@ -392,8 +362,40 @@ class Project extends Component {
 
       const tags = this.generateTagList(newImages)
 
-      this.setState({ images: newImages, tags })
+      this.setState({ images: newImages, tags }, this.saveToBackend)
     }
+  }
+
+  /*
+   * Fetch all listed image files in API_URL, and mix them with the images saved in the state.
+   * If an image file is not in the current state, load it anyway without tags.
+   */
+  getImages = () => {
+    const projectId = this.props.match.params.project_id
+    const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
+
+    return axios.get(imagesAPIURL).then(response => {
+      this.setState({
+        // Fill image objects in the state from the API response
+        images: response.data.images.map(imageObj => ({
+          name: imageObj.name,
+          url: `${imagesAPIURL}/${imageObj.name}`,
+          thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
+          tags: imageObj.tags ? imageObj.tags : []
+        })),
+        totalImages: response.data.total_images
+      })
+    })
+  }
+
+  handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
+
+  onSettingsChange = newSettings => {
+    this.setState({ settings: newSettings }, this.saveLocal)
+  }
+
+  showDeleteImageTagsDialog = () => {
+    this.setState({ showDeleteImageTagsDialog: true })
   }
 
   render() {

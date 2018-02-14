@@ -83,8 +83,8 @@ def get_images(id):
     project = db.query(Project).filter_by(id=id).first()
 
     return jsonify(
-        status='ok', images=[img.name for img in project.images],
-        total_images=len(project.images)
+            status='ok', images=[{'name': img.name, 'tags': img.tags} for img in project.images],
+            total_images=len(project.images)
     )
 
 
@@ -104,3 +104,16 @@ def get_image_thumbnail(id, imagename):
     thumbnails_folder = '{}/thumbnails'.format(target)
     thumbnail_path = '{}/{}'.format(thumbnails_folder, imagename)
     return send_file(thumbnail_path)
+
+
+@bp.route('/<project_id>/image/<imagename>/tags', methods=['POST'])
+def update_image_tags(project_id, imagename):
+    print('Updating tags for image: ' + imagename)
+    print(request.json)
+    if not request.is_json:
+        return jsonify(status='error')
+    db.query(Image).\
+        filter((Image.project_id == project_id) & (Image.name == imagename)).\
+        update({"tags": request.json})
+    db.commit()
+    return jsonify(status='ok')
