@@ -52,19 +52,22 @@ def upload_images(id):
     target = '{}/{}'.format(UPLOAD_FOLDER, get_project_folder(project))
     thumbnails_folder = '{}/thumbnails'.format(target)
     images = []
-    filenames = [
-        image.filename.rsplit('/')[0]
+
+    # Generate dict {filename: upload} with corrected filenames
+    files = {
+        # Extract filename from path and replace spaces by "_"
+        image.filename.rsplit('/')[0].replace(' ', '_'): image
         for image in request.files.values()
-    ]
-    already_uploaded = db.query(Image).filter(Image.name.in_(filenames))
-    already_uploaded_names = [image.name for image in already_uploaded]
-    for upload in request.files.values():
-        filename = upload.filename.rsplit('/')[0]
+    }
+    already_uploaded_names = [image.name
+                              for image in db.query(Image).filter(
+                                  Image.name.in_(files.keys()))]
+    for filename in files:
         if filename not in already_uploaded_names:
             destination = '/'.join([target, filename])
             print('Accept incoming file:', filename)
             print('Save it to:', destination)
-            upload.save(destination)
+            files[filename].save(destination)
             images.append(Image(name=filename, project_id=id))
             # generate thumbnail
             thumb = ImageOps.fit(
