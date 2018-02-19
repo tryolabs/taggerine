@@ -59,17 +59,19 @@ class Project extends Component {
   }
 
   /*
-   * Save tags and images to the API DB
+   * Save tags and bounding boxes to the API DB
    */
-  saveToBackend = () => {
+  saveTags = () => {
     var imgName = this.state.images[this.state.currentImageIndex].name
     var imgTags = this.state.images[this.state.currentImageIndex].tags
     var headers: { 'content-type': 'application/json' }
-    axios.post(
-      `${API_URL}/projects/${this.props.match.params.project_id}/image/${imgName}/tags`,
-      imgTags,
-      headers
-    )
+    axios
+      .post(
+        `${API_URL}/projects/${this.props.match.params.project_id}/image/${imgName}/tags`,
+        imgTags,
+        headers
+      )
+      .then(this.getTags)
   }
 
   componentWillMount() {
@@ -234,7 +236,7 @@ class Project extends Component {
           return { ...image, tags: this._mergeTags(newTags, image.tags) }
         } else return image
       })
-      this.setState({ images, tags }, this.saveToBackend)
+      this.setState({ images, tags }, this.saveTags)
     }
     reader.readAsText(tagFile)
   }
@@ -256,12 +258,6 @@ class Project extends Component {
     }, {})
     const content = JSON.stringify(toDownload)
     saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
-  }
-
-  generateTagList = images => {
-    let tags = new Set()
-    images.forEach(image => image.tags.forEach(tag => tags.add(tag.label)))
-    return [...tags]
   }
 
   addTag = () => {
@@ -291,9 +287,7 @@ class Project extends Component {
     const newImage = images[this.state.currentImageIndex]
     images[this.state.currentImageIndex] = { ...newImage, tags: [...newImage.tags, newTag] }
 
-    const tags = this.generateTagList(images)
-
-    this.setState({ images, tags, lastTagPos }, this.saveToBackend)
+    this.setState({ images, lastTagPos }, this.saveTags)
   }
 
   updateTag = tag => {
@@ -305,12 +299,10 @@ class Project extends Component {
     const newImages = [...images]
     newImages[currentImageIndex].tags = imageTags
 
-    const tags = this.generateTagList(newImages)
-
     const lastTagPos = this.state.lastTagPos
     lastTagPos[tag.label] = tag
 
-    this.setState({ images: newImages, tags, lastTagPos }, this.saveToBackend)
+    this.setState({ images: newImages, lastTagPos }, this.saveTags)
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -324,13 +316,11 @@ class Project extends Component {
     const newImages = [...images]
     newImages[currentImageIndex] = newImage
 
-    const tags = this.generateTagList(newImages)
-
     // Update information of last block for the new label
     const lastTagPos = this.state.lastTagPos
     lastTagPos[label] = newTag
 
-    this.setState({ images: newImages, tags, lastTagPos }, this.saveToBackend)
+    this.setState({ images: newImages, lastTagPos }, this.saveTags)
   }
 
   removeTag = id => {
@@ -340,15 +330,12 @@ class Project extends Component {
     const newImages = [...this.state.images]
     newImages[currentImageIndex].tags = imageTags
 
-    const tags = this.generateTagList(newImages)
-
-    this.setState({ images: newImages, tags }, this.saveToBackend)
+    this.setState({ images: newImages }, this.saveTags)
   }
 
   cleanAllTags = e => {
-    const tags = []
     const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.setState({ images, tags }, this.saveToBackend)
+    this.setState({ images }, this.saveTags)
   }
 
   confirmDeleteImageTags = confirmed => {
@@ -360,9 +347,7 @@ class Project extends Component {
       const newImages = [...images]
       newImages[currentImageIndex] = newImage
 
-      const tags = this.generateTagList(newImages)
-
-      this.setState({ images: newImages, tags }, this.saveToBackend)
+      this.setState({ images: newImages }, this.saveTags)
     }
   }
 
@@ -374,17 +359,29 @@ class Project extends Component {
     const projectId = this.props.match.params.project_id
     const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
 
-    return axios.get(imagesAPIURL).then(response => {
-      this.setState({
-        // Fill image objects in the state from the API response
-        images: response.data.images.map(imageObj => ({
-          name: imageObj.name,
-          url: `${imagesAPIURL}/${imageObj.name}`,
-          thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
-          tags: imageObj.tags ? imageObj.tags : []
-        })),
-        totalImages: response.data.total_images
+    return axios
+      .get(imagesAPIURL)
+      .then(response => {
+        this.setState({
+          // Fill image objects in the state from the API response
+          images: response.data.images.map(imageObj => ({
+            name: imageObj.name,
+            url: `${imagesAPIURL}/${imageObj.name}`,
+            thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
+            tags: imageObj.tags ? imageObj.tags : []
+          })),
+          totalImages: response.data.total_images
+        })
       })
+      .then(this.getTags)
+  }
+
+  getTags = () => {
+    const projectId = this.props.match.params.project_id
+    const url = `${API_URL}/projects/${projectId}/tags`
+
+    return axios.get(url).then(response => {
+      this.setState({ tags: response.data.tags })
     })
   }
 

@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request, send_file
 from flask_apispec import marshal_with, use_kwargs
 from PIL import Image as PilImage, ImageOps
 
-from ..models import db, Project, Image
+from ..models import db, Project, Image, Tag
 from ..serializers import ProjectSchema
 
 DEFAULT_THUMBNAIL_SIZE = (120, 120)
@@ -68,7 +68,7 @@ def upload_images(id):
             print('Accept incoming file:', filename)
             print('Save it to:', destination)
             files[filename].save(destination)
-            images.append(Image(name=filename, project_id=id))
+            images.append(Image(name=filename, project_id=id, tags=[]))
             # generate thumbnail
             thumb = ImageOps.fit(
                 PilImage.open(destination), DEFAULT_THUMBNAIL_SIZE,
@@ -89,6 +89,12 @@ def get_images(id):
             status='ok', images=[{'name': img.name, 'tags': img.tags} for img in project.images],
             total_images=len(project.images)
     )
+
+
+@bp.route('/<project_id>/tags', methods=['GET'])
+def get_tags(project_id):
+    return jsonify(status='ok',
+                   tags=[tag.name for tag in db.query(Tag).filter_by(project_id=project_id)])
 
 
 @bp.route('/<id>/images/<imagename>', methods=['GET'])
@@ -122,12 +128,17 @@ def get_image_thumbnail(id, imagename):
 
 @bp.route('/<project_id>/image/<imagename>/tags', methods=['POST'])
 def update_image_tags(project_id, imagename):
-    print('Updating tags for image: ' + imagename)
-    print(request.json)
     if not request.is_json:
         return jsonify(status='error')
-    db.query(Image).\
-        filter((Image.project_id == project_id) & (Image.name == imagename)).\
-        update({"tags": request.json})
+
+    new_tags = request.json
+
+    image = db.query(Image).filter((Image.project_id == project_id)
+                                   & (Image.name == imagename)).first()
+
+    # Update Tag objects, since each one has a list of the images using it
+    Tag.update_tags_references(db, project_id, image, new_tags)
+
+    image.tags = new_tags
     db.commit()
     return jsonify(status='ok')
