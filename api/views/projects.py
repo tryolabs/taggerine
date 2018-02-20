@@ -109,11 +109,11 @@ def get_image(id, imagename):
 @bp.route('/<project_id>/images/<imagename>', methods=['DELETE'])
 def delete_image(project_id, imagename):
     project = db.query(Project).filter_by(id=project_id).first()
-    os.remove(os.path.join(UPLOAD_FOLDER, get_project_folder(project), imagename))
     db.query(Image).\
         filter((Image.project_id == project_id) & (Image.name == imagename)).\
         delete()
     db.commit()
+    os.remove(os.path.join(UPLOAD_FOLDER, get_project_folder(project), imagename))
     return jsonify(status='ok')
 
 
@@ -128,17 +128,21 @@ def get_image_thumbnail(id, imagename):
 
 @bp.route('/<project_id>/image/<imagename>/tags', methods=['POST'])
 def update_image_tags(project_id, imagename):
-    if not request.is_json:
+    try:
+        if not request.is_json:
+            raise ValueError('Invalid request')
+
+        new_tags = request.json
+
+        image = db.query(Image).filter((Image.project_id == project_id)
+                                       & (Image.name == imagename)).first()
+
+        # Update Tag objects, since each one has a list of the images using it
+        Tag.update_tags_references(db, project_id, image, new_tags)
+
+        image.tags = new_tags
+        db.commit()
+        return jsonify(status='ok')
+    except:
+        db.rollback()
         return jsonify(status='error')
-
-    new_tags = request.json
-
-    image = db.query(Image).filter((Image.project_id == project_id)
-                                   & (Image.name == imagename)).first()
-
-    # Update Tag objects, since each one has a list of the images using it
-    Tag.update_tags_references(db, project_id, image, new_tags)
-
-    image.tags = new_tags
-    db.commit()
-    return jsonify(status='ok')
