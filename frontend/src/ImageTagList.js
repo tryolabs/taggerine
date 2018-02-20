@@ -15,7 +15,7 @@ const ImageTagList = ({ imageTags, onTagLabelChange, onRepeatTag, onRemoveTag })
           <Input
             disableUnderline={true}
             className="taglist-row-label"
-            defaultValue={imageTag.label}
+            value={imageTag.label}
             onChange={e => onTagLabelChange(index, e.target.value)}
           />
           <ListItemSecondaryAction>

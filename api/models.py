@@ -73,6 +73,10 @@ class Tag(Base):
         # Tags removed from the image
         for tagname in (old_tag_names - new_tag_names):
 
+            # Defensive: requests that update Tag references may have failed previously
+            if tagname not in tags or image.id not in tags[tagname].image_ids:
+                continue
+
             # Remove image_id from this Tag's list
             tags[tagname].image_ids.remove(image.id)
 

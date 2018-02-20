@@ -25,6 +25,10 @@ const API_URL = process.env.REACT_APP_API_URL
 
 let tagId = 0
 
+let lastTagChange = 0
+
+let lastTagSave = 0
+
 class Project extends Component {
   state = {
     images: [],
@@ -43,39 +47,50 @@ class Project extends Component {
 
   saveLocal = () =>
     saveToLocalStorage({
-      tags: this.state.tags,
       tagFormat: this.state.tagFormat,
-      settings: this.state.settings,
-      tagId
+      settings: this.state.settings
     })
 
   loadFromLocal = () => {
     const loaded = loadFromLocalStorage()
     if (loaded) {
-      tagId = loaded.tagId
-      delete loaded.tagId
       this.setState(loaded)
     }
   }
 
+  syncCurrentTagsDB = () => this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+
+  syncImageTagsDB = image => {
+    if (lastTagChange > lastTagSave) {
+      console.log('saving to db...')
+      lastTagSave = Date.now()
+      var imgName = image.name
+      var imgTags = image.tags
+      var headers: { 'content-type': 'application/json' }
+      axios
+        .post(
+          `${API_URL}/projects/${this.props.match.params.project_id}/image/${imgName}/tags`,
+          imgTags,
+          headers
+        )
+        .then(this.getTags)
+    }
+  }
+
   /*
-   * Save tags and bounding boxes to the API DB
+   * Set flag to sync tags and bounding boxes to the API DB
    */
-  saveTags = () => {
-    var imgName = this.state.images[this.state.currentImageIndex].name
-    var imgTags = this.state.images[this.state.currentImageIndex].tags
-    var headers: { 'content-type': 'application/json' }
-    axios
-      .post(
-        `${API_URL}/projects/${this.props.match.params.project_id}/image/${imgName}/tags`,
-        imgTags,
-        headers
-      )
-      .then(this.getTags)
+  tagsChanged = () => {
+    lastTagChange = Date.now()
   }
 
   componentWillMount() {
     this.loadFromLocal()
+  }
+
+  componentWillUpdate(nextProps, nextState) {
+    var nextImg = nextState.images[nextState.currentImageIndex]
+    if (nextImg) tagId = this.nextTagId(nextImg)
   }
 
   componentDidMount() {
@@ -89,9 +104,17 @@ class Project extends Component {
         }
       }, 3000)
     })
+
+    // Periodically check sync with DB for current image Tags
+    setInterval(() => {
+      if (lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
+        this.syncCurrentTagsDB()
+      }
+    }, 1000)
   }
 
   nextImage = () => {
+    this.syncCurrentTagsDB()
     this.setState(prevState => {
       const currentImageIndex =
         prevState.images.length > prevState.currentImageIndex + 1
@@ -100,10 +123,11 @@ class Project extends Component {
       return {
         currentImageIndex: currentImageIndex
       }
-    }) // avoid saving state here, currentImageIndex is not saved, so this can only hide bugs
+    })
   }
 
   prevImage = () => {
+    this.syncCurrentTagsDB()
     this.setState(prevState => {
       const currentImageIndex =
         prevState.currentImageIndex > 0
@@ -112,7 +136,7 @@ class Project extends Component {
       return {
         currentImageIndex: currentImageIndex
       }
-    }) // avoid saving state here, currentImageIndex is not saved, so this can only hide bugs
+    })
   }
 
   uploadImages = images => {
@@ -224,19 +248,23 @@ class Project extends Component {
     return { x, y, width, height }
   }
 
+  nextTagId = image => {
+    return 1 + image.tags.reduce((prev, current) => (prev > current.id ? prev : current.id), 0)
+  }
+
   uploadTags = tagFile => {
     let reader = new FileReader()
     reader.onload = e => {
-      let tags = []
       const uploadedTags = JSON.parse(e.target.result)
       const images = this.state.images.map(image => {
         const newTags = uploadedTags[image.name]
         if (Boolean(newTags)) {
-          tags = [...new Set([...tags, ...newTags.map(t => t.label)])]
-          return { ...image, tags: this._mergeTags(newTags, image.tags) }
+          const result = { ...image, tags: this._mergeTags(newTags, image.tags) }
+          this.syncTagsDB(result)
+          return result
         } else return image
       })
-      this.setState({ images, tags }, this.saveTags)
+      this.setState({ images })
     }
     reader.readAsText(tagFile)
   }
@@ -287,7 +315,8 @@ class Project extends Component {
     const newImage = images[this.state.currentImageIndex]
     images[this.state.currentImageIndex] = { ...newImage, tags: [...newImage.tags, newTag] }
 
-    this.setState({ images, lastTagPos }, this.saveTags)
+    this.tagsChanged()
+    this.setState({ images, lastTagPos })
   }
 
   updateTag = tag => {
@@ -302,7 +331,8 @@ class Project extends Component {
     const lastTagPos = this.state.lastTagPos
     lastTagPos[tag.label] = tag
 
-    this.setState({ images: newImages, lastTagPos }, this.saveTags)
+    this.tagsChanged()
+    this.setState({ images: newImages, lastTagPos })
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -320,7 +350,8 @@ class Project extends Component {
     const lastTagPos = this.state.lastTagPos
     lastTagPos[label] = newTag
 
-    this.setState({ images: newImages, lastTagPos }, this.saveTags)
+    this.tagsChanged()
+    this.setState({ images: newImages, lastTagPos })
   }
 
   removeTag = id => {
@@ -330,12 +361,14 @@ class Project extends Component {
     const newImages = [...this.state.images]
     newImages[currentImageIndex].tags = imageTags
 
-    this.setState({ images: newImages }, this.saveTags)
+    this.tagsChanged()
+    this.setState({ images: newImages })
   }
 
   cleanAllTags = e => {
     const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.setState({ images }, this.saveTags)
+    this.tagsChanged()
+    this.setState({ images })
   }
 
   confirmDeleteImageTags = confirmed => {
@@ -347,7 +380,8 @@ class Project extends Component {
       const newImages = [...images]
       newImages[currentImageIndex] = newImage
 
-      this.setState({ images: newImages }, this.saveTags)
+      this.tagsChanged()
+      this.setState({ images: newImages })
     }
   }
 
@@ -385,10 +419,17 @@ class Project extends Component {
     })
   }
 
-  handleImageSelection = currentImageIndex => this.setState({ currentImageIndex })
+  handleImageSelection = currentImageIndex => {
+    // sync before changing image if necessary
+    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+    this.setState({ currentImageIndex })
+  }
 
   handleImageDelete = imageIndex => {
-    var imgName = this.state.images[imageIndex].name
+    var img = this.state.images[imageIndex]
+    var imgName = img.name
+    this.syncImageTagsDB(img) // sync before deleting if necessary
+
     const config = {
       headers: { 'content-type': 'application/x-www-form-urlencoded' }
     }
@@ -398,9 +439,16 @@ class Project extends Component {
       config
     )
 
-    var newState = { images: [...this.state.images], totalImages: this.state.totalImages - 1 }
+    var newState = { images: [...this.state.images] }
     newState.images.splice(imageIndex, 1)
+    newState.totalImages = newState.images.length
+
+    // Move current image in case we just deleted it
+    if (imageIndex === this.state.currentImageIndex)
+      newState.currentImageIndex = imageIndex === 0 ? 0 : imageIndex - 1
+
     this.setState(newState)
+    return false
   }
 
   onSettingsChange = newSettings => {
