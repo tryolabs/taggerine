@@ -1,4 +1,4 @@
-import os
+import os, shutil
 from flask import Blueprint, jsonify, request, send_file
 from flask_apispec import marshal_with, use_kwargs
 from PIL import Image as PilImage, ImageOps
@@ -17,23 +17,21 @@ def get_project_folder(project):
 
 @bp.route('/', methods=['GET'])
 def project_list():
-    projects = db.query(Project).all()
-    schema = ProjectSchema()
-    serialized = [schema.dump(p).data for p in projects]
-    return jsonify(projects=serialized)
+    return jsonify(status='ok', projects=[{'id': p.id, 'name': p.name} for p in db.query(Project)])
 
 
 @bp.route('/', methods=['POST'])
 def create_project():
-    print(request)
-    print(request.get_json())
     name = request.get_json()['name']
     project = Project(name=name)
     db.add(project)
     db.commit()
 
     target = '{}/{}'.format(UPLOAD_FOLDER, get_project_folder(project))
+    if os.path.isdir(target):
+        shutil.rmtree(target)
     os.mkdir(target)
+
     thumbnails_folder = '{}/thumbnails'.format(target)
     os.mkdir(thumbnails_folder)
 
@@ -43,6 +41,19 @@ def create_project():
 @bp.route('/<id>', methods=('GET',))
 def get_project(id):
     project = db.query(Project).filter_by(id=id).first()
+    return project
+
+
+@bp.route('/<id>', methods=('DELETE',))
+def delete_project(id):
+    project = db.query(Project).filter_by(id=id)
+
+    target = '{}/{}'.format(UPLOAD_FOLDER, get_project_folder(project))
+    if os.path.isdir(target):
+        shutil.rmtree(target)
+
+    project.delete()
+    db.commit()
     return project
 
 
@@ -61,7 +72,8 @@ def upload_images(id):
     }
     already_uploaded_names = [image.name
                               for image in db.query(Image).filter(
-                                  Image.name.in_(files.keys()))]
+                                  (Image.project_id == id) &
+                                  (Image.name.in_(files.keys())))]
     for filename in files:
         if filename not in already_uploaded_names:
             destination = '/'.join([target, filename])
@@ -89,6 +101,20 @@ def get_images(id):
             status='ok', images=[{'name': img.name, 'tags': img.tags} for img in project.images],
             total_images=len(project.images)
     )
+
+
+@bp.route('/<project_id>/settings', methods=['GET', 'POST'])
+def project_settings(project_id):
+    if request.method == 'POST':
+        project = db.query(Project).filter_by(id=project_id).first()
+        project.settings = request.json
+        db.commit()
+        return jsonify(status='ok')
+    else:
+        return jsonify(status='ok',
+                       settings=db.query(Project.settings).
+                       filter_by(id=project_id).
+                       scalar())
 
 
 @bp.route('/<project_id>/tags', methods=['GET'])
@@ -129,9 +155,6 @@ def get_image_thumbnail(id, imagename):
 @bp.route('/<project_id>/image/<imagename>/tags', methods=['POST'])
 def update_image_tags(project_id, imagename):
     try:
-        if not request.is_json:
-            raise ValueError('Invalid request')
-
         new_tags = request.json
 
         image = db.query(Image).filter((Image.project_id == project_id)
