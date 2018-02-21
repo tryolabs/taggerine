@@ -303,7 +303,7 @@ class Project extends Component {
     } else {
       // First bbox with this label: place it in top left corner, with default w/h configured
       x = 0
-      y = 0
+      y = 0.04
       width = this.state.settings.bbWidth / 100
       height = this.state.settings.bbHeight / 100
     }
