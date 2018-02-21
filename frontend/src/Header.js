@@ -138,7 +138,7 @@ class Header extends React.Component {
               TAGGERINE
             </Typography>
             <Typography type="subheading" className={this.props.classes.projectName}>
-              / Awesome project
+              / {this.props.currentProjectName}
             </Typography>
             <UploadImages
               visibleDialog={dialogType}
@@ -175,6 +175,7 @@ class Header extends React.Component {
 }
 
 Header.propTypes = {
+  currentProjectName: PropTypes.string,
   onUploadImage: PropTypes.func.isRequired,
   onImportTags: PropTypes.func.isRequired,
   onExportTags: PropTypes.func.isRequired,

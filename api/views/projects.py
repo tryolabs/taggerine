@@ -105,22 +105,29 @@ def get_images(id):
 
 @bp.route('/<project_id>/settings', methods=['GET', 'POST'])
 def project_settings(project_id):
+    project = db.query(Project).filter_by(id=project_id).first()
     if request.method == 'POST':
-        project = db.query(Project).filter_by(id=project_id).first()
         project.settings = request.json
         db.commit()
         return jsonify(status='ok')
     else:
         return jsonify(status='ok',
-                       settings=db.query(Project.settings).
-                       filter_by(id=project_id).
-                       scalar())
+                       name=project.name,
+                       settings=project.settings)
 
 
 @bp.route('/<project_id>/tags', methods=['GET'])
 def get_tags(project_id):
     return jsonify(status='ok',
                    tags=[tag.name for tag in db.query(Tag).filter_by(project_id=project_id)])
+
+
+@bp.route('/<project_id>/tags', methods=['DELETE'])
+def delete_tags(project_id):
+    db.query(Image).filter_by(project_id=project_id).update({'tags': []})
+    db.query(Tag).filter_by(project_id=project_id).delete()
+    db.commit()
+    return jsonify(status='ok')
 
 
 @bp.route('/<id>/images/<imagename>', methods=['GET'])
@@ -135,9 +142,10 @@ def get_image(id, imagename):
 @bp.route('/<project_id>/images/<imagename>', methods=['DELETE'])
 def delete_image(project_id, imagename):
     project = db.query(Project).filter_by(id=project_id).first()
-    db.query(Image).\
-        filter((Image.project_id == project_id) & (Image.name == imagename)).\
-        delete()
+    image = db.query(Image).filter(
+            (Image.project_id == project_id) & (Image.name == imagename)).first()
+    Tag.update_tags_references(db, project_id, image, [])
+    db.delete(image)
     db.commit()
     os.remove(os.path.join(UPLOAD_FOLDER, get_project_folder(project), imagename))
     return jsonify(status='ok')
