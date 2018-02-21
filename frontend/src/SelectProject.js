@@ -6,7 +6,6 @@ import axios from 'axios'
 
 import './SelectProject.css'
 
-const PROJECT_ID_KEY = 'project_id'
 const API_URL = process.env.REACT_APP_API_URL
 
 class SelectProject extends Component {
@@ -21,7 +20,7 @@ class SelectProject extends Component {
   }
 
   _selectProject = projectId => {
-    window.localStorage.setItem(PROJECT_ID_KEY, projectId)
+    window.localStorage.setItem('project_id', projectId)
     this.props.history.push('/')
   }
 
@@ -45,7 +44,7 @@ class SelectProject extends Component {
   handleSubmit = event => {
     const data = { name: this.state.currentName }
     axios.post(`${API_URL}/projects/`, data).then(response => {
-      window.localStorage.setItem(PROJECT_ID_KEY, response.data.project_id)
+      window.localStorage.setItem('project_id', response.data.project_id)
       this.props.history.push('/')
     })
     event.preventDefault()
