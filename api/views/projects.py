@@ -23,6 +23,8 @@ def project_list():
 @bp.route('/', methods=['POST'])
 def create_project():
     name = request.get_json()['name']
+    if not name:
+        return jsonify(status='error', msg='Project name empty')
     project = Project(name=name)
     db.add(project)
     db.commit()
@@ -46,15 +48,15 @@ def get_project(id):
 
 @bp.route('/<id>', methods=('DELETE',))
 def delete_project(id):
-    project = db.query(Project).filter_by(id=id)
+    project = db.query(Project).filter_by(id=id).first()
 
     target = '{}/{}'.format(UPLOAD_FOLDER, get_project_folder(project))
     if os.path.isdir(target):
         shutil.rmtree(target)
 
-    project.delete()
+    db.delete(project)
     db.commit()
-    return project
+    return jsonify(status='ok')
 
 
 @bp.route('/<id>/images', methods=['POST'])

@@ -35,18 +35,6 @@ body {overflow: hidden}
   overflow: auto;
 }
 
-#header {
-  grid-area: header;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #222;
-  color: white;
-
-  padding: 20px;
-}
-
 #uploaded-list {
   grid-area: uploaded-list;
   margin: 5px 5px 15px 5px;
