@@ -108,6 +108,8 @@ def get_images(id):
 @bp.route('/<project_id>/settings', methods=['GET', 'POST'])
 def project_settings(project_id):
     project = db.query(Project).filter_by(id=project_id).first()
+    if not project:
+        return jsonify(status='error', msg='Project does not exist')
     if request.method == 'POST':
         project.settings = request.json
         db.commit()

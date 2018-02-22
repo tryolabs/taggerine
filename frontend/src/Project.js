@@ -58,14 +58,17 @@ class Project extends Component {
     )
   }
 
-  loadSettings = () => {
+  loadSettings = () =>
     axios.get(`${API_URL}/projects/${this.state.project_id}/settings`).then(response => {
+      if (response.data.status !== 'ok') {
+        throw response
+      }
       this.setState({
         projectName: response.data.name,
         settings: response.data.settings ? response.data.settings : this.state.settings
       })
+      return response
     })
-  }
 
   syncCurrentTagsDB = () =>
     this.syncImageTagsDB(this.state.images[this.state.currentImageIndex]).then(this.getTags)
@@ -108,17 +111,18 @@ class Project extends Component {
 
   componentDidMount() {
     this.loadSettings()
-
-    this.getImages().then(() => {
-      let intervalId = setInterval(() => {
-        if (this.state.totalImages > this.state.images.length) {
-          this.getImages()
-        } else {
-          clearInterval(intervalId)
-          intervalId = null
-        }
-      }, 3000)
-    })
+      .then(this.getImages)
+      .then(() => {
+        let intervalId = setInterval(() => {
+          if (this.state.totalImages > this.state.images.length) {
+            this.getImages()
+          } else {
+            clearInterval(intervalId)
+            intervalId = null
+          }
+        }, 3000)
+      })
+      .catch(this.onExit)
 
     // Periodically check sync with DB for current image Tags
     syncTagsInterval = setInterval(() => {
@@ -470,7 +474,9 @@ class Project extends Component {
   }
 
   onExit = () => {
-    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+    if (this.state.images.length) {
+      this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+    }
     window.localStorage.removeItem('project_id')
     this.setState({ project_id: null })
   }
