@@ -38,13 +38,8 @@ const ImageList = ({ imageList, selectedIdx, onSelect, onDelete, classes }) =>
   imageList.length ? (
     <div className={classes.list}>
       {imageList.map((image, index) => (
-        <LazyLoad height={120} offset={1200} overflow unmountIfInvisible>
-          <Tooltip
-            className={classes.tooltip}
-            placement="right-end"
-            title={image.name}
-            key={image.name}
-          >
+        <LazyLoad height={120} offset={1200} overflow unmountIfInvisible key={image.name}>
+          <Tooltip className={classes.tooltip} placement="right-end" title={image.name}>
             <Card className={classes.card} onClick={() => onSelect(index)}>
               <div className={index === selectedIdx ? classes.activeImage : ''}>
                 <TaggedIcon display={image.tags.length} classes={classes} />
