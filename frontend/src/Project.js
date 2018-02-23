@@ -73,19 +73,24 @@ class Project extends Component {
   syncCurrentTagsDB = () => this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
 
   syncImageTagsDB = image => {
-    if (lastTagChange > lastTagSave) {
-      lastTagSave = Date.now()
-      var imgName = image.name
-      var imgTags = image.tags
-      var headers: { 'content-type': 'application/json' }
-      return axios.post(
-        `${API_URL}/projects/${this.state.project_id}/image/${imgName}/tags`,
-        imgTags,
-        headers
-      )
+    if (lastTagChange <= lastTagSave) {
+      Promise.resolve()
     }
+    lastTagSave = Date.now()
+    var imgName = image.name
+    var imgTags = image.tags
+    var headers: { 'content-type': 'application/json' }
+    return axios.post(
+      `${API_URL}/projects/${this.state.project_id}/image/${imgName}/tags`,
+      imgTags,
+      headers
+    )
   }
 
+  syncAllImageTags = images => {
+    var headers: { 'content-type': 'application/json' }
+    return axios.post(`${API_URL}/projects/${this.state.project_id}/tags`, images, headers)
+  }
 
   cleanAllTags = e => {
     const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
@@ -103,11 +108,6 @@ class Project extends Component {
   componentWillMount() {
     // Persist selected project_id in localstorage for next app open
     window.localStorage.setItem('project_id', this.state.project_id)
-  }
-
-  componentWillUpdate(nextProps, nextState) {
-    var nextImg = nextState.images[nextState.currentImageIndex]
-    if (nextImg) tagId = this.nextTagId(nextImg)
   }
 
   componentDidMount() {
@@ -190,50 +190,45 @@ class Project extends Component {
   }
 
   _tagFormat = newTags => {
-    let result = 'empty'
-    if (newTags.length > 0 && 'x' in newTags[0]) {
-      result = 'xywh'
-    } else if (newTags.length > 0 && 'x_min' in newTags[0]) {
-      result = 'xyxy'
+    if (newTags.length > 0) {
+      return 'x_min' in newTags[0] ? 'xyxy' : 'xywh'
     }
-    return result
+    return null
+  }
+
+  _equivalentTags(tag1, tag2) {
+    if (tag1.label !== tag2.label) return false
+
+    return (
+      Math.abs(tag1.x - tag2.x) < PRECISION_ERROR &&
+      Math.abs(tag1.y - tag2.y) < PRECISION_ERROR &&
+      Math.abs(tag1.width - tag2.width) < PRECISION_ERROR &&
+      Math.abs(tag1.height - tag2.height) < PRECISION_ERROR
+    )
   }
 
   _mergeTags = (newTags, oldTags) => {
+    // Convert newTags format if necessary
     const format = this._tagFormat(newTags)
-    return newTags.map(newTag => {
-      const tag = oldTags.find(oldTag => {
-        if (oldTag.name !== newTag.label) return false
-        if (format === 'xywh') {
-          return (
-            oldTag.x === newTag.x &&
-            oldTag.y === newTag.y &&
-            oldTag.width === newTag.width &&
-            oldTag.height === newTag.height
-          )
-        } else {
-          return (
-            oldTag.x === newTag.x_min &&
-            oldTag.y === newTag.y_min &&
-            Math.abs(newTag.x_max - newTag.x_min - oldTag.width) < PRECISION_ERROR &&
-            Math.abs(newTag.y_max - newTag.y_min - oldTag.height) < PRECISION_ERROR
-          )
-        }
-      })
+    if (format === null) {
+      return oldTags
+    } else if (format === 'xyxy') {
+      newTags = newTags.map(this._XYXYFormatToXYWH)
+    }
 
-      if (Boolean(tag)) return tag
-      else {
-        let id = tagId
-        tagId += 1
-        if (format === 'xyxy') this._XYXYFormatToXYWH(tagId, newTag)
-        else newTag.id = id
-        return newTag
+    // Find if there's another equivalent Tag to avoid adding repeated ones
+    newTags.forEach(newTag => {
+      var isRepeated = oldTags.some(oldTag => this._equivalentTags(newTag, oldTag))
+
+      if (!isRepeated) {
+        newTag.id = ++tagId
+        oldTags.push(newTag)
       }
     })
+    return oldTags
   }
 
-  _XYXYFormatToXYWH = (id, bbox) => {
-    bbox.id = id
+  _XYXYFormatToXYWH = bbox => {
     bbox.x = bbox.x_min
     bbox.y = bbox.y_min
     bbox.width = bbox.x_max - bbox.x_min
@@ -242,6 +237,7 @@ class Project extends Component {
     delete bbox.y_min
     delete bbox.y_max
     delete bbox.y_min
+    return bbox
   }
 
   /*
@@ -275,8 +271,17 @@ class Project extends Component {
     return { x, y, width, height }
   }
 
-  nextTagId = image => {
-    return 1 + image.tags.reduce((prev, current) => (prev > current.id ? prev : current.id), 0)
+  calculateNextTagId = () => {
+    // Find the maximum ID in all images' tags and add 1
+    tagId =
+      1 +
+      this.state.images.reduce((prev_max_id, img) => {
+        var img_max_id = img.tags.reduce(
+          (prev, current) => (prev > current.id ? prev : current.id),
+          0
+        )
+        return img_max_id > prev_max_id ? img_max_id : prev_max_id
+      }, 0)
   }
 
   uploadTags = tagFile => {
@@ -287,20 +292,21 @@ class Project extends Component {
         const newTags = uploadedTags[image.name]
         if (Boolean(newTags)) {
           const result = { ...image, tags: this._mergeTags(newTags, image.tags) }
-          this.syncTagsDB(result)
           return result
         } else return image
       })
-      this.setState({ images })
+      this.syncAllImageTags(images)
+        .then(this.getImages)
+        .then(this.getTags)
     }
     reader.readAsText(tagFile)
   }
 
   downloadTags = format => {
-    const xywh = format.toUpperCase() === 'XYWH'
+    const xyxy = format.toUpperCase() === 'XYXY'
     const toDownload = this.state.images.reduce((acc, image) => {
       let data = image.tags
-      if (xywh) {
+      if (xyxy) {
         data = image.tags.map(({ x, y, width, height, id, label }) => ({
           x_min: x,
           y_min: y,
@@ -312,7 +318,7 @@ class Project extends Component {
       return { ...acc, [image.name]: data }
     }, {})
     const content = JSON.stringify(toDownload)
-    saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
+    saveAs(content, `tags_${this.state.projectName}.json`, 'application/json;charset=utf-8')
   }
 
   addTag = () => {
@@ -334,9 +340,8 @@ class Project extends Component {
       width = this.state.settings.bbWidth / 100
       height = this.state.settings.bbHeight / 100
     }
-    const newTag = { x, y, width, height, label: label, id: tagId }
+    const newTag = { x, y, width, height, label: label, id: ++tagId }
     lastTagPos[label] = newTag
-    tagId += 1
 
     const images = [...this.state.images]
     const newImage = images[this.state.currentImageIndex]
@@ -415,16 +420,19 @@ class Project extends Component {
     const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
 
     return axios.get(imagesAPIURL).then(response => {
-      this.setState({
-        // Fill image objects in the state from the API response
-        images: response.data.images.map(imageObj => ({
-          name: imageObj.name,
-          url: `${imagesAPIURL}/${imageObj.name}`,
-          thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
-          tags: imageObj.tags ? imageObj.tags : []
-        })),
-        totalImages: response.data.total_images
-      })
+      this.setState(
+        {
+          // Fill image objects in the state from the API response
+          images: response.data.images.map(imageObj => ({
+            name: imageObj.name,
+            url: `${imagesAPIURL}/${imageObj.name}`,
+            thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
+            tags: imageObj.tags ? imageObj.tags : []
+          })),
+          totalImages: response.data.total_images
+        },
+        this.calculateNextTagId
+      )
     })
   }
 
