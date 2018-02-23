@@ -70,12 +70,10 @@ class Project extends Component {
       return response
     })
 
-  syncCurrentTagsDB = () =>
-    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex]).then(this.getTags)
+  syncCurrentTagsDB = () => this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
 
   syncImageTagsDB = image => {
     if (lastTagChange > lastTagSave) {
-      console.log('saving to db...')
       lastTagSave = Date.now()
       var imgName = image.name
       var imgTags = image.tags
@@ -88,7 +86,10 @@ class Project extends Component {
     }
   }
 
-  cleanAllTagsDB = () => {
+
+  cleanAllTags = e => {
+    const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
+    this.setState({ images, tags: [] })
     return axios.delete(`${API_URL}/projects/${this.state.project_id}/tags`).then(this.getTags)
   }
 
@@ -112,10 +113,11 @@ class Project extends Component {
   componentDidMount() {
     this.loadSettings()
       .then(this.getImages)
+      .then(this.getTags)
       .then(() => {
         let intervalId = setInterval(() => {
           if (this.state.totalImages > this.state.images.length) {
-            this.getImages()
+            this.getImages().then(this.getTags)
           } else {
             clearInterval(intervalId)
             intervalId = null
@@ -127,7 +129,7 @@ class Project extends Component {
     // Periodically check sync with DB for current image Tags
     syncTagsInterval = setInterval(() => {
       if (lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
-        this.syncCurrentTagsDB()
+        this.syncCurrentTagsDB().then(this.getTags)
       }
     }, 1000)
   }
@@ -137,7 +139,7 @@ class Project extends Component {
   }
 
   nextImage = () => {
-    this.syncCurrentTagsDB()
+    this.syncCurrentTagsDB().then(this.getTags)
     this.setState(prevState => {
       const currentImageIndex =
         prevState.images.length > prevState.currentImageIndex + 1
@@ -150,7 +152,7 @@ class Project extends Component {
   }
 
   prevImage = () => {
-    this.syncCurrentTagsDB()
+    this.syncCurrentTagsDB().then(this.getTags)
     this.setState(prevState => {
       const currentImageIndex =
         prevState.currentImageIndex > 0
@@ -177,12 +179,14 @@ class Project extends Component {
         axios
           .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
           .then(this.getImages)
+          .then(this.getTags)
         data = new FormData()
       }
     }
     axios
       .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
       .then(this.getImages)
+      .then(this.getTags)
   }
 
   _tagFormat = newTags => {
@@ -388,12 +392,6 @@ class Project extends Component {
     this.setState({ images: newImages })
   }
 
-  cleanAllTags = e => {
-    this.cleanAllTagsDB()
-    const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.setState({ images })
-  }
-
   confirmDeleteImageTags = confirmed => {
     this.setState({ showDeleteImageTagsDialog: false })
     if (confirmed) {
@@ -416,21 +414,18 @@ class Project extends Component {
     const projectId = this.state.project_id
     const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
 
-    return axios
-      .get(imagesAPIURL)
-      .then(response => {
-        this.setState({
-          // Fill image objects in the state from the API response
-          images: response.data.images.map(imageObj => ({
-            name: imageObj.name,
-            url: `${imagesAPIURL}/${imageObj.name}`,
-            thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
-            tags: imageObj.tags ? imageObj.tags : []
-          })),
-          totalImages: response.data.total_images
-        })
+    return axios.get(imagesAPIURL).then(response => {
+      this.setState({
+        // Fill image objects in the state from the API response
+        images: response.data.images.map(imageObj => ({
+          name: imageObj.name,
+          url: `${imagesAPIURL}/${imageObj.name}`,
+          thumbnailURL: `${imagesAPIURL}/thumbnail/${imageObj.name}`,
+          tags: imageObj.tags ? imageObj.tags : []
+        })),
+        totalImages: response.data.total_images
       })
-      .then(this.getTags)
+    })
   }
 
   getTags = () => {
@@ -444,14 +439,14 @@ class Project extends Component {
 
   handleImageSelection = currentImageIndex => {
     // sync before changing image if necessary
-    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+    this.syncCurrentTagsDB().then(this.getTags())
     this.setState({ currentImageIndex })
   }
 
   handleImageDelete = imageIndex => {
     var img = this.state.images[imageIndex]
     var imgName = img.name
-    this.syncImageTagsDB(img) // sync before deleting if necessary
+    this.syncImageTagsDB(img).then(this.getTags) // sync before deleting if necessary
 
     axios
       .delete(`${API_URL}/projects/${this.state.project_id}/images/${imgName}`)
