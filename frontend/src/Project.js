@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
+import { Redirect } from 'react-router-dom'
 import { AutoSizer } from 'react-virtualized'
 
 import saveAs from 'js-file-download'
-import { loadFromLocalStorage, saveToLocalStorage } from './localStorage'
 
 import ImageTagList from './ImageTagList'
 import DialogHelper from './Dialogs/DialogHelper'
@@ -29,8 +29,12 @@ let lastTagChange = 0
 
 let lastTagSave = 0
 
+let syncTagsInterval = null
+
 class Project extends Component {
   state = {
+    project_id: this.props.match.params.project_id,
+    projectName: '',
     images: [],
     totalImages: 0,
     tags: [],
@@ -45,20 +49,29 @@ class Project extends Component {
     }
   }
 
-  saveLocal = () =>
-    saveToLocalStorage({
-      tagFormat: this.state.tagFormat,
-      settings: this.state.settings
-    })
-
-  loadFromLocal = () => {
-    const loaded = loadFromLocalStorage()
-    if (loaded) {
-      this.setState(loaded)
-    }
+  saveSettings = () => {
+    var headers: { 'content-type': 'application/json' }
+    axios.post(
+      `${API_URL}/projects/${this.state.project_id}/settings`,
+      this.state.settings,
+      headers
+    )
   }
 
-  syncCurrentTagsDB = () => this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+  loadSettings = () =>
+    axios.get(`${API_URL}/projects/${this.state.project_id}/settings`).then(response => {
+      if (response.data.status !== 'ok') {
+        throw response
+      }
+      this.setState({
+        projectName: response.data.name,
+        settings: response.data.settings ? response.data.settings : this.state.settings
+      })
+      return response
+    })
+
+  syncCurrentTagsDB = () =>
+    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex]).then(this.getTags)
 
   syncImageTagsDB = image => {
     if (lastTagChange > lastTagSave) {
@@ -67,14 +80,16 @@ class Project extends Component {
       var imgName = image.name
       var imgTags = image.tags
       var headers: { 'content-type': 'application/json' }
-      axios
-        .post(
-          `${API_URL}/projects/${this.props.match.params.project_id}/image/${imgName}/tags`,
-          imgTags,
-          headers
-        )
-        .then(this.getTags)
+      return axios.post(
+        `${API_URL}/projects/${this.state.project_id}/image/${imgName}/tags`,
+        imgTags,
+        headers
+      )
     }
+  }
+
+  cleanAllTagsDB = () => {
+    return axios.delete(`${API_URL}/projects/${this.state.project_id}/tags`).then(this.getTags)
   }
 
   /*
@@ -85,7 +100,8 @@ class Project extends Component {
   }
 
   componentWillMount() {
-    this.loadFromLocal()
+    // Persist selected project_id in localstorage for next app open
+    window.localStorage.setItem('project_id', this.state.project_id)
   }
 
   componentWillUpdate(nextProps, nextState) {
@@ -94,23 +110,30 @@ class Project extends Component {
   }
 
   componentDidMount() {
-    this.getImages().then(() => {
-      let intervalId = setInterval(() => {
-        if (this.state.totalImages > this.state.images.length) {
-          this.getImages()
-        } else {
-          clearInterval(intervalId)
-          intervalId = null
-        }
-      }, 3000)
-    })
+    this.loadSettings()
+      .then(this.getImages)
+      .then(() => {
+        let intervalId = setInterval(() => {
+          if (this.state.totalImages > this.state.images.length) {
+            this.getImages()
+          } else {
+            clearInterval(intervalId)
+            intervalId = null
+          }
+        }, 3000)
+      })
+      .catch(this.onExit)
 
     // Periodically check sync with DB for current image Tags
-    setInterval(() => {
+    syncTagsInterval = setInterval(() => {
       if (lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
         this.syncCurrentTagsDB()
       }
     }, 1000)
+  }
+
+  componentWillUnmount() {
+    clearInterval(syncTagsInterval)
   }
 
   nextImage = () => {
@@ -152,13 +175,13 @@ class Project extends Component {
       data.append('file[' + i + ']', file, file.name)
       if (i % batchLimit === 0 && i > 0) {
         axios
-          .post(`${API_URL}/projects/${this.props.match.params.project_id}/images`, data, config)
+          .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
           .then(this.getImages)
         data = new FormData()
       }
     }
     axios
-      .post(`${API_URL}/projects/${this.props.match.params.project_id}/images`, data, config)
+      .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
       .then(this.getImages)
   }
 
@@ -303,7 +326,7 @@ class Project extends Component {
     } else {
       // First bbox with this label: place it in top left corner, with default w/h configured
       x = 0
-      y = 0
+      y = 0.04
       width = this.state.settings.bbWidth / 100
       height = this.state.settings.bbHeight / 100
     }
@@ -366,8 +389,8 @@ class Project extends Component {
   }
 
   cleanAllTags = e => {
+    this.cleanAllTagsDB()
     const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.tagsChanged()
     this.setState({ images })
   }
 
@@ -390,7 +413,7 @@ class Project extends Component {
    * If an image file is not in the current state, load it anyway without tags.
    */
   getImages = () => {
-    const projectId = this.props.match.params.project_id
+    const projectId = this.state.project_id
     const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
 
     return axios
@@ -411,7 +434,7 @@ class Project extends Component {
   }
 
   getTags = () => {
-    const projectId = this.props.match.params.project_id
+    const projectId = this.state.project_id
     const url = `${API_URL}/projects/${projectId}/tags`
 
     return axios.get(url).then(response => {
@@ -430,14 +453,9 @@ class Project extends Component {
     var imgName = img.name
     this.syncImageTagsDB(img) // sync before deleting if necessary
 
-    const config = {
-      headers: { 'content-type': 'application/x-www-form-urlencoded' }
-    }
-    axios.delete(
-      `${API_URL}/projects/${this.props.match.params.project_id}/images/${imgName}`,
-      {},
-      config
-    )
+    axios
+      .delete(`${API_URL}/projects/${this.state.project_id}/images/${imgName}`)
+      .then(this.getTags)
 
     var newState = { images: [...this.state.images] }
     newState.images.splice(imageIndex, 1)
@@ -452,7 +470,15 @@ class Project extends Component {
   }
 
   onSettingsChange = newSettings => {
-    this.setState({ settings: newSettings }, this.saveLocal)
+    this.setState({ settings: newSettings }, this.saveSettings)
+  }
+
+  onExit = () => {
+    if (this.state.images.length) {
+      this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+    }
+    window.localStorage.removeItem('project_id')
+    this.setState({ project_id: null })
   }
 
   showDeleteImageTagsDialog = () => {
@@ -464,13 +490,18 @@ class Project extends Component {
     const currentImage = images[currentImageIndex]
     const currentImageTags = currentImage ? currentImage.tags : []
 
-    return (
+    // Check exit project
+    return this.state.project_id === null ? (
+      <Redirect to="/" />
+    ) : (
       <div className="Project">
         <Header
+          currentProjectName={this.state.projectName}
           onUploadImage={this.uploadImages}
           onImportTags={this.uploadTags}
           onExportTags={this.downloadTags}
           onDelete={this.cleanAllTags}
+          onExit={this.onExit}
           onSettingsChange={this.onSettingsChange}
           settings={this.state.settings}
         />

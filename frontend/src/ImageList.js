@@ -17,8 +17,8 @@ const styles = theme => ({
   },
   card: { margin: 4, cursor: 'pointer', position: 'relative', overflow: 'hidden' },
   media: { height: 120 },
-  closeButton: { position: 'absolute', top: 0, right: 0 },
-  tagIcon: { position: 'absolute', top: -15, left: 0 },
+  closeButton: { position: 'absolute', top: -10, right: -10 },
+  tagIcon: { position: 'absolute', top: -12, left: -14 },
   activeImage: { background: 'black', padding: 1 }
 })
 

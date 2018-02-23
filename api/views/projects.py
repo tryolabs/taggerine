@@ -1,4 +1,4 @@
-import os
+import os, shutil
 from flask import Blueprint, jsonify, request, send_file
 from flask_apispec import marshal_with, use_kwargs
 from PIL import Image as PilImage, ImageOps
@@ -17,23 +17,23 @@ def get_project_folder(project):
 
 @bp.route('/', methods=['GET'])
 def project_list():
-    projects = db.query(Project).all()
-    schema = ProjectSchema()
-    serialized = [schema.dump(p).data for p in projects]
-    return jsonify(projects=serialized)
+    return jsonify(status='ok', projects=[{'id': p.id, 'name': p.name} for p in db.query(Project)])
 
 
 @bp.route('/', methods=['POST'])
 def create_project():
-    print(request)
-    print(request.get_json())
     name = request.get_json()['name']
+    if not name:
+        return jsonify(status='error', msg='Project name empty')
     project = Project(name=name)
     db.add(project)
     db.commit()
 
     target = '{}/{}'.format(UPLOAD_FOLDER, get_project_folder(project))
+    if os.path.isdir(target):
+        shutil.rmtree(target)
     os.mkdir(target)
+
     thumbnails_folder = '{}/thumbnails'.format(target)
     os.mkdir(thumbnails_folder)
 
@@ -44,6 +44,19 @@ def create_project():
 def get_project(id):
     project = db.query(Project).filter_by(id=id).first()
     return project
+
+
+@bp.route('/<id>', methods=('DELETE',))
+def delete_project(id):
+    project = db.query(Project).filter_by(id=id).first()
+
+    target = '{}/{}'.format(UPLOAD_FOLDER, get_project_folder(project))
+    if os.path.isdir(target):
+        shutil.rmtree(target)
+
+    db.delete(project)
+    db.commit()
+    return jsonify(status='ok')
 
 
 @bp.route('/<id>/images', methods=['POST'])
@@ -61,7 +74,8 @@ def upload_images(id):
     }
     already_uploaded_names = [image.name
                               for image in db.query(Image).filter(
-                                  Image.name.in_(files.keys()))]
+                                  (Image.project_id == id) &
+                                  (Image.name.in_(files.keys())))]
     for filename in files:
         if filename not in already_uploaded_names:
             destination = '/'.join([target, filename])
@@ -91,10 +105,33 @@ def get_images(id):
     )
 
 
+@bp.route('/<project_id>/settings', methods=['GET', 'POST'])
+def project_settings(project_id):
+    project = db.query(Project).filter_by(id=project_id).first()
+    if not project:
+        return jsonify(status='error', msg='Project does not exist')
+    if request.method == 'POST':
+        project.settings = request.json
+        db.commit()
+        return jsonify(status='ok')
+    else:
+        return jsonify(status='ok',
+                       name=project.name,
+                       settings=project.settings)
+
+
 @bp.route('/<project_id>/tags', methods=['GET'])
 def get_tags(project_id):
     return jsonify(status='ok',
                    tags=[tag.name for tag in db.query(Tag).filter_by(project_id=project_id)])
+
+
+@bp.route('/<project_id>/tags', methods=['DELETE'])
+def delete_tags(project_id):
+    db.query(Image).filter_by(project_id=project_id).update({'tags': []})
+    db.query(Tag).filter_by(project_id=project_id).delete()
+    db.commit()
+    return jsonify(status='ok')
 
 
 @bp.route('/<id>/images/<imagename>', methods=['GET'])
@@ -109,9 +146,10 @@ def get_image(id, imagename):
 @bp.route('/<project_id>/images/<imagename>', methods=['DELETE'])
 def delete_image(project_id, imagename):
     project = db.query(Project).filter_by(id=project_id).first()
-    db.query(Image).\
-        filter((Image.project_id == project_id) & (Image.name == imagename)).\
-        delete()
+    image = db.query(Image).filter(
+            (Image.project_id == project_id) & (Image.name == imagename)).first()
+    Tag.update_tags_references(db, project_id, image, [])
+    db.delete(image)
     db.commit()
     os.remove(os.path.join(UPLOAD_FOLDER, get_project_folder(project), imagename))
     return jsonify(status='ok')
@@ -129,9 +167,6 @@ def get_image_thumbnail(id, imagename):
 @bp.route('/<project_id>/image/<imagename>/tags', methods=['POST'])
 def update_image_tags(project_id, imagename):
     try:
-        if not request.is_json:
-            raise ValueError('Invalid request')
-
         new_tags = request.json
 
         image = db.query(Image).filter((Image.project_id == project_id)

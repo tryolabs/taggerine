@@ -1,4 +1,4 @@
-version: "2"
+version: "2.1"
 
 volumes:
   database:
@@ -12,7 +12,8 @@ services:
     ports:
       - 5000:5000
     depends_on:
-      - postgres
+        postgres:
+            condition: service_healthy
     volumes:
       - ./api:/api
     env_file:
@@ -35,3 +36,8 @@ services:
     image: postgres
     volumes:
       - database:/var/lib/postgresql/data/
+    healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 2s
+        timeout: 14s
+        retries: 5

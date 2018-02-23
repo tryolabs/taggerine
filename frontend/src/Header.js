@@ -5,6 +5,7 @@ import Toolbar from 'material-ui/Toolbar'
 import Typography from 'material-ui/Typography'
 import DeleteIcon from 'material-ui-icons/DeleteForever'
 import ImportExportIcon from 'material-ui-icons/ImportExport'
+import ExitToAppIcon from 'material-ui-icons/ExitToApp'
 import UploadIcon from 'material-ui-icons/FileUpload'
 import SettingsIcon from 'material-ui-icons/Settings'
 import Button from 'material-ui/Button'
@@ -137,7 +138,7 @@ class Header extends React.Component {
               TAGGERINE
             </Typography>
             <Typography type="subheading" className={this.props.classes.projectName}>
-              / Awesome project
+              / {this.props.currentProjectName}
             </Typography>
             <UploadImages
               visibleDialog={dialogType}
@@ -161,6 +162,11 @@ class Header extends React.Component {
               onSettingsChange={this.props.onSettingsChange}
               onClose={_ => this.closeDialog()}
             />
+            <div>
+              <Button dense color="inherit" onClick={this.props.onExit}>
+                <ExitToAppIcon color="primary" />
+              </Button>
+            </div>
           </Toolbar>
         </AppBar>
       </div>
@@ -169,6 +175,7 @@ class Header extends React.Component {
 }
 
 Header.propTypes = {
+  currentProjectName: PropTypes.string,
   onUploadImage: PropTypes.func.isRequired,
   onImportTags: PropTypes.func.isRequired,
   onExportTags: PropTypes.func.isRequired,

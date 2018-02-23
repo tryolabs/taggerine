@@ -16,18 +16,6 @@
   font-family: 'sans-serif';
 }
 
-#header {
-  grid-area: header;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #222;
-  color: white;
-
-  padding: 20px;
-}
-
 #new-project {
   grid-area: new-project;
 
@@ -47,43 +35,4 @@
   color: black;
   padding: 20px;
   min-height: 300px;
-}
-
-#left-panel {
-  grid-area: left-panel;
-  display: flex;
-  background-color: #222;
-  height: 100%;
-}
-
-#right-panel {
-  grid-area: right-panel;
-  display: flex;
-  background-color: #222;
-  height: 100%;
-}
-
-.project-list {
-  border: solid 2px black;
-  border-radius: 5px;
-  height: 100%;
-}
-
-.project-list-empty {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-
-  text-align: center;
-
-  height: 100%;
-}
-
-.project-list-item {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  text-align: left;
-  cursor: pointer;
-  padding: 10px;
 }

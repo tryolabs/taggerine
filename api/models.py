@@ -21,6 +21,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     name = Column(String, nullable=False, unique=True)
     images = relationship('Image', backref='project')
+    settings = Column(JSON, nullable=True)
 
     def __repr__(self):
         return f'<Project({self.id}, {self.name})>'
