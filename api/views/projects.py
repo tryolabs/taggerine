@@ -97,11 +97,11 @@ def upload_images(id):
 
 @bp.route('/<id>/images', methods=['GET'])
 def get_images(id):
-    project = db.query(Project).filter_by(id=id).first()
+    images = db.query(Image).filter_by(project_id=id).order_by(Image.name).all()
 
     return jsonify(
-            status='ok', images=[{'name': img.name, 'tags': img.tags} for img in project.images],
-            total_images=len(project.images)
+            status='ok', images=[{'name': img.name, 'tags': img.tags} for img in images],
+            total_images=len(images)
     )
 
 
