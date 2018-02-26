@@ -43,7 +43,12 @@ class Project extends Component {
     currentImageIndex: 0,
     lastTagPos: {},
     tagFormat: 'xywh',
-    showDeleteImageTagsDialog: false,
+    confirmDialog: {
+      visible: false,
+      title: '',
+      message: '',
+      onConfirm: null
+    },
     settings: {
       bbWidth: 14,
       bbHeight: 14,
@@ -261,6 +266,17 @@ class Project extends Component {
       }, 0)
   }
 
+  confirmDialogClose = confirmed => {
+    if (confirmed) {
+      this.state.confirmDialog.onConfirm()
+    }
+    this.setState({ confirmDialog: { visible: false, title: '', message: '', onConfirm: null } })
+  }
+
+  confirmDialogOpen(title, message, onConfirm) {
+    this.setState({ confirmDialog: { visible: true, title, message, onConfirm } })
+  }
+
   onDrop = (files, e) => {
     var images = []
 
@@ -413,18 +429,22 @@ class Project extends Component {
     this.setState({ images: newImages })
   }
 
-  confirmDeleteImageTags = confirmed => {
-    this.setState({ showDeleteImageTagsDialog: false })
-    if (confirmed) {
-      const { images, currentImageIndex } = this.state
-      const image = images[currentImageIndex]
-      const newImage = { ...image, tags: [] }
-      const newImages = [...images]
-      newImages[currentImageIndex] = newImage
+  confirmDeleteImageTags = () => {
+    this.confirmDialogOpen(
+      'Delete all tags from this image?',
+      "Are you sure that you want to delete all bounding boxes from this image? This can't be undone.",
+      // onConfirm
+      () => {
+        const { images, currentImageIndex } = this.state
+        const image = images[currentImageIndex]
+        const newImage = { ...image, tags: [] }
+        const newImages = [...images]
+        newImages[currentImageIndex] = newImage
 
-      this.tagsChanged()
-      this.setState({ images: newImages })
-    }
+        this.tagsChanged()
+        this.setState({ images: newImages })
+      }
+    )
   }
 
   /*
@@ -500,12 +520,8 @@ class Project extends Component {
     this.setState({ project_id: null })
   }
 
-  showDeleteImageTagsDialog = () => {
-    this.setState({ showDeleteImageTagsDialog: true })
-  }
-
   render() {
-    const { images, currentImageIndex, tags } = this.state
+    const { images, currentImageIndex, tags, confirmDialog } = this.state
     const currentImage = images[currentImageIndex]
     const currentImageTags = currentImage ? currentImage.tags : []
 
@@ -517,6 +533,13 @@ class Project extends Component {
         <FileDrop frame={document} onDrop={this.onDrop}>
           Drop images or JSON files here to import them to the project...
         </FileDrop>
+        <DialogHelper
+          open={confirmDialog.visible}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={() => this.confirmDialogClose(true)}
+          onCancel={() => this.confirmDialogClose(false)}
+        />
         <Header
           currentProjectName={this.state.projectName}
           onUploadImage={this.uploadImages}
@@ -575,18 +598,11 @@ class Project extends Component {
           <CardActions className="taglist-cardactions">
             <Button
               color="primary"
-              onClick={this.showDeleteImageTagsDialog}
+              onClick={this.confirmDeleteImageTags}
               disabled={!currentImageTags.length}
             >
               <ClearIcon />
             </Button>
-            <DialogHelper
-              open={this.state.showDeleteImageTagsDialog}
-              title="Delete all tags from this image?"
-              message="Are you sure that you want to delete all bounding boxes from this image? This can't be undone."
-              onConfirm={() => this.confirmDeleteImageTags(true)}
-              onCancel={() => this.confirmDeleteImageTags(false)}
-            />
           </CardActions>
         </Card>
       </div>
