@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Redirect } from 'react-router-dom'
 import { AutoSizer } from 'react-virtualized'
+import FileDrop from 'react-file-drop'
 
 import saveAs from 'js-file-download'
 
@@ -18,6 +19,7 @@ import AddIcon from 'material-ui-icons/Add'
 import ClearIcon from 'material-ui-icons/Clear'
 
 import './Project.css'
+import './FileDrop.css'
 import Header from './Header'
 
 const PRECISION_ERROR = '0.000001'
@@ -164,31 +166,6 @@ class Project extends Component {
     })
   }
 
-  uploadImages = images => {
-    let data = new FormData()
-    const batchLimit = 100
-
-    const config = {
-      headers: { 'content-type': 'multipart/form-data' }
-    }
-
-    for (var i = 0; i < images.length; i++) {
-      let file = images[i]
-      data.append('file[' + i + ']', file, file.name)
-      if (i % batchLimit === 0 && i > 0) {
-        axios
-          .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
-          .then(this.getImages)
-          .then(this.getTags)
-        data = new FormData()
-      }
-    }
-    axios
-      .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
-      .then(this.getImages)
-      .then(this.getTags)
-  }
-
   _tagFormat = newTags => {
     if (newTags.length > 0) {
       return 'x_min' in newTags[0] ? 'xyxy' : 'xywh'
@@ -282,6 +259,45 @@ class Project extends Component {
         )
         return img_max_id > prev_max_id ? img_max_id : prev_max_id
       }, 0)
+  }
+
+  onDrop = (files, e) => {
+    var images = []
+
+    // FileList doesn't allow .forEach()
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i]
+      if (file.type === 'image/png' || file.type === 'image/jpeg') {
+        images.push(file)
+      } else if (file.type === 'application/json') {
+        this.uploadTags(file)
+      }
+    }
+  }
+
+  uploadImages = images => {
+    let data = new FormData()
+    const batchLimit = 100
+
+    const config = {
+      headers: { 'content-type': 'multipart/form-data' }
+    }
+
+    for (var i = 0; i < images.length; i++) {
+      let file = images[i]
+      data.append('file[' + i + ']', file, file.name)
+      if (i % batchLimit === 0 && i > 0) {
+        axios
+          .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
+          .then(this.getImages)
+          .then(this.getTags)
+        data = new FormData()
+      }
+    }
+    axios
+      .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
+      .then(this.getImages)
+      .then(this.getTags)
   }
 
   uploadTags = tagFile => {
@@ -498,6 +514,9 @@ class Project extends Component {
       <Redirect to="/" />
     ) : (
       <div className="Project">
+        <FileDrop frame={document} onDrop={this.onDrop}>
+          Drop images or JSON files here to import them to the project...
+        </FileDrop>
         <Header
           currentProjectName={this.state.projectName}
           onUploadImage={this.uploadImages}
