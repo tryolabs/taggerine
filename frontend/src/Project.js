@@ -267,18 +267,22 @@ class Project extends Component {
   }
 
   confirmDialogClose = confirmed => {
-    if (confirmed) {
+    if (confirmed && this.state.confirmDialog.onConfirm) {
       this.state.confirmDialog.onConfirm()
     }
     this.setState({ confirmDialog: { visible: false, title: '', message: '', onConfirm: null } })
   }
 
   confirmDialogOpen(title, message, onConfirm) {
-    this.setState({ confirmDialog: { visible: true, title, message, onConfirm } })
+    this.setState({
+      confirmDialog: { visible: true, title, message, onConfirm, alert: onConfirm === undefined }
+    })
   }
 
   onDrop = (files, e) => {
     var images = []
+    var tagFiles = []
+    var ignoredFiles = []
 
     // FileList doesn't allow .forEach()
     for (var i = 0; i < files.length; i++) {
@@ -286,8 +290,20 @@ class Project extends Component {
       if (file.type === 'image/png' || file.type === 'image/jpeg') {
         images.push(file)
       } else if (file.type === 'application/json') {
+        tagFiles.push(file.name)
         this.uploadTags(file)
+      } else {
+        ignoredFiles.push(file.name)
       }
+    }
+    this.uploadImages(images)
+    if (tagFiles.length) {
+      this.confirmDialogOpen('Tag files imported', `Tags imported from JSON file(s): ${tagFiles}`)
+    } else if (ignoredFiles.length) {
+      this.confirmDialogOpen(
+        'Files ignored',
+        `Supported types: JPEG, PNG, JSON. The following files were ignored: ${ignoredFiles}.`
+      )
     }
   }
 
@@ -538,7 +554,7 @@ class Project extends Component {
           title={confirmDialog.title}
           message={confirmDialog.message}
           onConfirm={() => this.confirmDialogClose(true)}
-          onCancel={() => this.confirmDialogClose(false)}
+          onCancel={confirmDialog.alert ? null : () => this.confirmDialogClose(false)}
         />
         <Header
           currentProjectName={this.state.projectName}
