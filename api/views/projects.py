@@ -97,11 +97,11 @@ def upload_images(id):
 
 @bp.route('/<id>/images', methods=['GET'])
 def get_images(id):
-    project = db.query(Project).filter_by(id=id).first()
+    images = db.query(Image).filter_by(project_id=id).order_by(Image.name).all()
 
     return jsonify(
-            status='ok', images=[{'name': img.name, 'tags': img.tags} for img in project.images],
-            total_images=len(project.images)
+            status='ok', images=[{'name': img.name, 'tags': img.tags} for img in images],
+            total_images=len(images)
     )
 
 
@@ -121,13 +121,29 @@ def project_settings(project_id):
 
 
 @bp.route('/<project_id>/tags', methods=['GET'])
-def get_tags(project_id):
+def get_project_tags(project_id):
     return jsonify(status='ok',
                    tags=[tag.name for tag in db.query(Tag).filter_by(project_id=project_id)])
 
 
+@bp.route('/<project_id>/tags', methods=['POST'])
+def save_project_tags(project_id):
+    images = request.json
+    images_dict = {img['name']: img['tags'] if 'tags' in img else [] for img in images}
+
+    image_objs = db.query(Image).filter((Image.project_id == project_id)
+                                        & (Image.name.in_(images_dict.keys())))
+
+    for img in image_objs:
+        # Update Tag objects, since each one has a list of the images using it
+        Tag.update_tags_references(db, project_id, img, images_dict[img.name])
+        img.tags = images_dict[img.name]
+    db.commit()
+    return jsonify(status='ok')
+
+
 @bp.route('/<project_id>/tags', methods=['DELETE'])
-def delete_tags(project_id):
+def delete_project_tags(project_id):
     db.query(Image).filter_by(project_id=project_id).update({'tags': []})
     db.query(Tag).filter_by(project_id=project_id).delete()
     db.commit()
