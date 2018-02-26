@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, JSON, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 
@@ -35,6 +35,9 @@ class Image(Base):
     name = Column(String, nullable=False)
     tags = Column(JSON, nullable=False)
 
+    # Multiple-field UNIQUE constraints cannot be done in column declaration
+    __table_args__ = (UniqueConstraint('project_id', 'name'),)
+
     def __repr__(self):
         return f'<Image({self.id}, {self.name})>'
 
@@ -47,6 +50,9 @@ class Tag(Base):
     project_id = Column(Integer, ForeignKey('projects.id', ondelete='CASCADE'), nullable=True)
     name = Column(String, nullable=False)
     image_ids = Column(JSON, nullable=True)
+
+    # Multiple-field UNIQUE constraints cannot be done in column declaration
+    __table_args__ = (UniqueConstraint('project_id', 'name'),)
 
     @staticmethod
     def update_tags_references(db, project_id, image, new_tags):
