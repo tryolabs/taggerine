@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import LazyLoad from 'react-lazyload'
 
 import { withStyles } from 'material-ui/styles'
 import Typography from 'material-ui/Typography'
@@ -37,30 +38,27 @@ const ImageList = ({ imageList, selectedIdx, onSelect, onDelete, classes }) =>
   imageList.length ? (
     <div className={classes.list}>
       {imageList.map((image, index) => (
-        <Tooltip
-          className={classes.tooltip}
-          placement="right-end"
-          title={image.name}
-          key={image.name}
-        >
-          <Card className={classes.card} onClick={() => onSelect(index)}>
-            <div className={index === selectedIdx ? classes.activeImage : ''}>
-              <TaggedIcon display={image.tags.length} classes={classes} />
-              <div className={classes.closeButton}>
-                <IconButton
-                  color="secondary"
-                  onClick={e => {
-                    e.stopPropagation()
-                    onDelete(index)
-                  }}
-                >
-                  <CancelIcon />
-                </IconButton>
+        <LazyLoad height={120} offset={1200} overflow unmountIfInvisible key={image.name}>
+          <Tooltip className={classes.tooltip} placement="right-end" title={image.name}>
+            <Card className={classes.card} onClick={() => onSelect(index)}>
+              <div className={index === selectedIdx ? classes.activeImage : ''}>
+                <TaggedIcon display={image.tags.length} classes={classes} />
+                <div className={classes.closeButton}>
+                  <IconButton
+                    color="secondary"
+                    onClick={e => {
+                      e.stopPropagation()
+                      onDelete(index)
+                    }}
+                  >
+                    <CancelIcon />
+                  </IconButton>
+                </div>
+                <CardMedia image={image.thumbnailURL} className={classes.media} />
               </div>
-              <CardMedia image={image.thumbnailURL} className={classes.media} />
-            </div>
-          </Card>
-        </Tooltip>
+            </Card>
+          </Tooltip>
+        </LazyLoad>
       ))}
     </div>
   ) : (

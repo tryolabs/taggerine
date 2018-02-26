@@ -11,8 +11,10 @@
     "material-ui-icons": "^1.0.0-beta.17",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
+    "react-file-drop": "^0.1.9",
     "react-files": "^2.4.3",
     "react-konva": "^1.6.4",
+    "react-lazyload": "^2.3.0",
     "react-router-dom": "^4.2.2",
     "react-scripts": "1.0.17",
     "react-virtualized": "^9.13.0"

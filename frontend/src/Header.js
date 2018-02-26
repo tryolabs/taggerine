@@ -28,7 +28,7 @@ const DialogType = Object.freeze({
 
 const UploadImages = ({ visibleDialog, showDialog, onClose }) => (
   <div>
-    <Button dense color="inherit" onClick={showDialog(DialogType.UploadImage)}>
+    <Button color="inherit" onClick={showDialog(DialogType.UploadImage)}>
       <UploadIcon color="primary" />
     </Button>
     <UploadImagesDialog open={visibleDialog === DialogType.UploadImage} onDismiss={onClose} />
@@ -37,7 +37,7 @@ const UploadImages = ({ visibleDialog, showDialog, onClose }) => (
 
 const ImportExport = ({ visibleDialog, showDialog, onClose }) => (
   <div>
-    <Button dense color="inherit" onClick={showDialog(DialogType.ImportExport)}>
+    <Button color="inherit" onClick={showDialog(DialogType.ImportExport)}>
       <ImportExportIcon color="primary" />
     </Button>
     <ImportExportDialog open={visibleDialog === DialogType.ImportExport} onDismiss={onClose} />
@@ -46,7 +46,7 @@ const ImportExport = ({ visibleDialog, showDialog, onClose }) => (
 
 const Delete = ({ visibleDialog, showDialog, onClose }) => (
   <div>
-    <Button dense color="inherit" onClick={showDialog(DialogType.Delete)}>
+    <Button color="inherit" onClick={showDialog(DialogType.Delete)}>
       <DeleteIcon color="primary" />
     </Button>
     <DialogHelper
@@ -61,7 +61,7 @@ const Delete = ({ visibleDialog, showDialog, onClose }) => (
 
 const Settings = ({ visibleDialog, showDialog, onClose, onSettingsChange, settings }) => (
   <div>
-    <Button dense color="inherit" onClick={showDialog(DialogType.Settings)}>
+    <Button color="inherit" onClick={showDialog(DialogType.Settings)}>
       <SettingsIcon color="primary" />
     </Button>
     <ProjectSettingsDialog
@@ -163,7 +163,7 @@ class Header extends React.Component {
               onClose={_ => this.closeDialog()}
             />
             <div>
-              <Button dense color="inherit" onClick={this.props.onExit}>
+              <Button color="inherit" onClick={this.props.onExit}>
                 <ExitToAppIcon color="primary" />
               </Button>
             </div>

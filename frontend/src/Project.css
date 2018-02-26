@@ -41,6 +41,12 @@ body {overflow: hidden}
   overflow: auto;
 }
 
+.file-drop > .file-drop-target.file-drop-dragging-over-frame{
+  position: absolute;
+  top: 75px;
+  left: 500px;
+}
+
 .taglist-cardactions {
   flex-grow: 0;
   justify-content: center;

@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Redirect } from 'react-router-dom'
 import { AutoSizer } from 'react-virtualized'
+import FileDrop from 'react-file-drop'
 
 import saveAs from 'js-file-download'
 
@@ -18,6 +19,7 @@ import AddIcon from 'material-ui-icons/Add'
 import ClearIcon from 'material-ui-icons/Clear'
 
 import './Project.css'
+import './FileDrop.css'
 import Header from './Header'
 
 const PRECISION_ERROR = '0.000001'
@@ -41,7 +43,12 @@ class Project extends Component {
     currentImageIndex: 0,
     lastTagPos: {},
     tagFormat: 'xywh',
-    showDeleteImageTagsDialog: false,
+    confirmDialog: {
+      visible: false,
+      title: '',
+      message: '',
+      onConfirm: null
+    },
     settings: {
       bbWidth: 14,
       bbHeight: 14,
@@ -70,25 +77,31 @@ class Project extends Component {
       return response
     })
 
-  syncCurrentTagsDB = () =>
-    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex]).then(this.getTags)
+  syncCurrentTagsDB = () => this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
 
   syncImageTagsDB = image => {
-    if (lastTagChange > lastTagSave) {
-      console.log('saving to db...')
-      lastTagSave = Date.now()
-      var imgName = image.name
-      var imgTags = image.tags
-      var headers: { 'content-type': 'application/json' }
-      return axios.post(
-        `${API_URL}/projects/${this.state.project_id}/image/${imgName}/tags`,
-        imgTags,
-        headers
-      )
+    if (lastTagChange <= lastTagSave) {
+      Promise.resolve()
     }
+    lastTagSave = Date.now()
+    var imgName = image.name
+    var imgTags = image.tags
+    var headers: { 'content-type': 'application/json' }
+    return axios.post(
+      `${API_URL}/projects/${this.state.project_id}/image/${imgName}/tags`,
+      imgTags,
+      headers
+    )
   }
 
-  cleanAllTagsDB = () => {
+  syncAllImageTags = images => {
+    var headers: { 'content-type': 'application/json' }
+    return axios.post(`${API_URL}/projects/${this.state.project_id}/tags`, images, headers)
+  }
+
+  cleanAllTags = e => {
+    const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
+    this.setState({ images, tags: [] })
     return axios.delete(`${API_URL}/projects/${this.state.project_id}/tags`).then(this.getTags)
   }
 
@@ -104,18 +117,14 @@ class Project extends Component {
     window.localStorage.setItem('project_id', this.state.project_id)
   }
 
-  componentWillUpdate(nextProps, nextState) {
-    var nextImg = nextState.images[nextState.currentImageIndex]
-    if (nextImg) tagId = this.nextTagId(nextImg)
-  }
-
   componentDidMount() {
     this.loadSettings()
       .then(this.getImages)
+      .then(this.getTags)
       .then(() => {
         let intervalId = setInterval(() => {
           if (this.state.totalImages > this.state.images.length) {
-            this.getImages()
+            this.getImages().then(this.getTags)
           } else {
             clearInterval(intervalId)
             intervalId = null
@@ -127,7 +136,7 @@ class Project extends Component {
     // Periodically check sync with DB for current image Tags
     syncTagsInterval = setInterval(() => {
       if (lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
-        this.syncCurrentTagsDB()
+        this.syncCurrentTagsDB().then(this.getTags)
       }
     }, 1000)
   }
@@ -137,7 +146,7 @@ class Project extends Component {
   }
 
   nextImage = () => {
-    this.syncCurrentTagsDB()
+    this.syncCurrentTagsDB().then(this.getTags)
     this.setState(prevState => {
       const currentImageIndex =
         prevState.images.length > prevState.currentImageIndex + 1
@@ -150,7 +159,7 @@ class Project extends Component {
   }
 
   prevImage = () => {
-    this.syncCurrentTagsDB()
+    this.syncCurrentTagsDB().then(this.getTags)
     this.setState(prevState => {
       const currentImageIndex =
         prevState.currentImageIndex > 0
@@ -162,74 +171,46 @@ class Project extends Component {
     })
   }
 
-  uploadImages = images => {
-    let data = new FormData()
-    const batchLimit = 100
-
-    const config = {
-      headers: { 'content-type': 'multipart/form-data' }
+  _tagFormat = newTags => {
+    if (newTags.length > 0) {
+      return 'x_min' in newTags[0] ? 'xyxy' : 'xywh'
     }
-
-    for (var i = 0; i < images.length; i++) {
-      let file = images[i]
-      data.append('file[' + i + ']', file, file.name)
-      if (i % batchLimit === 0 && i > 0) {
-        axios
-          .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
-          .then(this.getImages)
-        data = new FormData()
-      }
-    }
-    axios
-      .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
-      .then(this.getImages)
+    return null
   }
 
-  _tagFormat = newTags => {
-    let result = 'empty'
-    if (newTags.length > 0 && 'x' in newTags[0]) {
-      result = 'xywh'
-    } else if (newTags.length > 0 && 'x_min' in newTags[0]) {
-      result = 'xyxy'
-    }
-    return result
+  _equivalentTags(tag1, tag2) {
+    if (tag1.label !== tag2.label) return false
+
+    return (
+      Math.abs(tag1.x - tag2.x) < PRECISION_ERROR &&
+      Math.abs(tag1.y - tag2.y) < PRECISION_ERROR &&
+      Math.abs(tag1.width - tag2.width) < PRECISION_ERROR &&
+      Math.abs(tag1.height - tag2.height) < PRECISION_ERROR
+    )
   }
 
   _mergeTags = (newTags, oldTags) => {
+    // Convert newTags format if necessary
     const format = this._tagFormat(newTags)
-    return newTags.map(newTag => {
-      const tag = oldTags.find(oldTag => {
-        if (oldTag.name !== newTag.label) return false
-        if (format === 'xywh') {
-          return (
-            oldTag.x === newTag.x &&
-            oldTag.y === newTag.y &&
-            oldTag.width === newTag.width &&
-            oldTag.height === newTag.height
-          )
-        } else {
-          return (
-            oldTag.x === newTag.x_min &&
-            oldTag.y === newTag.y_min &&
-            Math.abs(newTag.x_max - newTag.x_min - oldTag.width) < PRECISION_ERROR &&
-            Math.abs(newTag.y_max - newTag.y_min - oldTag.height) < PRECISION_ERROR
-          )
-        }
-      })
+    if (format === null) {
+      return oldTags
+    } else if (format === 'xyxy') {
+      newTags = newTags.map(this._XYXYFormatToXYWH)
+    }
 
-      if (Boolean(tag)) return tag
-      else {
-        let id = tagId
-        tagId += 1
-        if (format === 'xyxy') this._XYXYFormatToXYWH(tagId, newTag)
-        else newTag.id = id
-        return newTag
+    // Find if there's another equivalent Tag to avoid adding repeated ones
+    newTags.forEach(newTag => {
+      var isRepeated = oldTags.some(oldTag => this._equivalentTags(newTag, oldTag))
+
+      if (!isRepeated) {
+        newTag.id = ++tagId
+        oldTags.push(newTag)
       }
     })
+    return oldTags
   }
 
-  _XYXYFormatToXYWH = (id, bbox) => {
-    bbox.id = id
+  _XYXYFormatToXYWH = bbox => {
     bbox.x = bbox.x_min
     bbox.y = bbox.y_min
     bbox.width = bbox.x_max - bbox.x_min
@@ -238,6 +219,7 @@ class Project extends Component {
     delete bbox.y_min
     delete bbox.y_max
     delete bbox.y_min
+    return bbox
   }
 
   /*
@@ -271,8 +253,83 @@ class Project extends Component {
     return { x, y, width, height }
   }
 
-  nextTagId = image => {
-    return 1 + image.tags.reduce((prev, current) => (prev > current.id ? prev : current.id), 0)
+  calculateNextTagId = () => {
+    // Find the maximum ID in all images' tags and add 1
+    tagId =
+      1 +
+      this.state.images.reduce((prev_max_id, img) => {
+        var img_max_id = img.tags.reduce(
+          (prev, current) => (prev > current.id ? prev : current.id),
+          0
+        )
+        return img_max_id > prev_max_id ? img_max_id : prev_max_id
+      }, 0)
+  }
+
+  confirmDialogClose = confirmed => {
+    if (confirmed && this.state.confirmDialog.onConfirm) {
+      this.state.confirmDialog.onConfirm()
+    }
+    this.setState({ confirmDialog: { visible: false, title: '', message: '', onConfirm: null } })
+  }
+
+  confirmDialogOpen(title, message, onConfirm) {
+    this.setState({
+      confirmDialog: { visible: true, title, message, onConfirm, alert: onConfirm === undefined }
+    })
+  }
+
+  onDrop = (files, e) => {
+    var images = []
+    var tagFiles = []
+    var ignoredFiles = []
+
+    // FileList doesn't allow .forEach()
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i]
+      if (file.type === 'image/png' || file.type === 'image/jpeg') {
+        images.push(file)
+      } else if (file.type === 'application/json') {
+        tagFiles.push(file.name)
+        this.uploadTags(file)
+      } else {
+        ignoredFiles.push(file.name)
+      }
+    }
+    this.uploadImages(images)
+    if (tagFiles.length) {
+      this.confirmDialogOpen('Tag files imported', `Tags imported from JSON file(s): ${tagFiles}`)
+    } else if (ignoredFiles.length) {
+      this.confirmDialogOpen(
+        'Files ignored',
+        `Supported types: JPEG, PNG, JSON. The following files were ignored: ${ignoredFiles}.`
+      )
+    }
+  }
+
+  uploadImages = images => {
+    let data = new FormData()
+    const batchLimit = 100
+
+    const config = {
+      headers: { 'content-type': 'multipart/form-data' }
+    }
+
+    for (var i = 0; i < images.length; i++) {
+      let file = images[i]
+      data.append('file[' + i + ']', file, file.name)
+      if (i % batchLimit === 0 && i > 0) {
+        axios
+          .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
+          .then(this.getImages)
+          .then(this.getTags)
+        data = new FormData()
+      }
+    }
+    axios
+      .post(`${API_URL}/projects/${this.state.project_id}/images`, data, config)
+      .then(this.getImages)
+      .then(this.getTags)
   }
 
   uploadTags = tagFile => {
@@ -283,20 +340,21 @@ class Project extends Component {
         const newTags = uploadedTags[image.name]
         if (Boolean(newTags)) {
           const result = { ...image, tags: this._mergeTags(newTags, image.tags) }
-          this.syncTagsDB(result)
           return result
         } else return image
       })
-      this.setState({ images })
+      this.syncAllImageTags(images)
+        .then(this.getImages)
+        .then(this.getTags)
     }
     reader.readAsText(tagFile)
   }
 
   downloadTags = format => {
-    const xywh = format.toUpperCase() === 'XYWH'
+    const xyxy = format.toUpperCase() === 'XYXY'
     const toDownload = this.state.images.reduce((acc, image) => {
       let data = image.tags
-      if (xywh) {
+      if (xyxy) {
         data = image.tags.map(({ x, y, width, height, id, label }) => ({
           x_min: x,
           y_min: y,
@@ -308,7 +366,7 @@ class Project extends Component {
       return { ...acc, [image.name]: data }
     }, {})
     const content = JSON.stringify(toDownload)
-    saveAs(content, 'project-name.json', 'application/json;charset=utf-8')
+    saveAs(content, `tags_${this.state.projectName}.json`, 'application/json;charset=utf-8')
   }
 
   addTag = () => {
@@ -330,9 +388,8 @@ class Project extends Component {
       width = this.state.settings.bbWidth / 100
       height = this.state.settings.bbHeight / 100
     }
-    const newTag = { x, y, width, height, label: label, id: tagId }
+    const newTag = { x, y, width, height, label: label, id: ++tagId }
     lastTagPos[label] = newTag
-    tagId += 1
 
     const images = [...this.state.images]
     const newImage = images[this.state.currentImageIndex]
@@ -388,24 +445,22 @@ class Project extends Component {
     this.setState({ images: newImages })
   }
 
-  cleanAllTags = e => {
-    this.cleanAllTagsDB()
-    const images = [...this.state.images].map(image => ({ ...image, tags: [] }))
-    this.setState({ images })
-  }
+  confirmDeleteImageTags = () => {
+    this.confirmDialogOpen(
+      'Delete all tags from this image?',
+      "Are you sure that you want to delete all bounding boxes from this image? This can't be undone.",
+      // onConfirm
+      () => {
+        const { images, currentImageIndex } = this.state
+        const image = images[currentImageIndex]
+        const newImage = { ...image, tags: [] }
+        const newImages = [...images]
+        newImages[currentImageIndex] = newImage
 
-  confirmDeleteImageTags = confirmed => {
-    this.setState({ showDeleteImageTagsDialog: false })
-    if (confirmed) {
-      const { images, currentImageIndex } = this.state
-      const image = images[currentImageIndex]
-      const newImage = { ...image, tags: [] }
-      const newImages = [...images]
-      newImages[currentImageIndex] = newImage
-
-      this.tagsChanged()
-      this.setState({ images: newImages })
-    }
+        this.tagsChanged()
+        this.setState({ images: newImages })
+      }
+    )
   }
 
   /*
@@ -416,10 +471,9 @@ class Project extends Component {
     const projectId = this.state.project_id
     const imagesAPIURL = `${API_URL}/projects/${projectId}/images`
 
-    return axios
-      .get(imagesAPIURL)
-      .then(response => {
-        this.setState({
+    return axios.get(imagesAPIURL).then(response => {
+      this.setState(
+        {
           // Fill image objects in the state from the API response
           images: response.data.images.map(imageObj => ({
             name: imageObj.name,
@@ -428,9 +482,10 @@ class Project extends Component {
             tags: imageObj.tags ? imageObj.tags : []
           })),
           totalImages: response.data.total_images
-        })
-      })
-      .then(this.getTags)
+        },
+        this.calculateNextTagId
+      )
+    })
   }
 
   getTags = () => {
@@ -444,14 +499,14 @@ class Project extends Component {
 
   handleImageSelection = currentImageIndex => {
     // sync before changing image if necessary
-    this.syncImageTagsDB(this.state.images[this.state.currentImageIndex])
+    this.syncCurrentTagsDB().then(this.getTags())
     this.setState({ currentImageIndex })
   }
 
   handleImageDelete = imageIndex => {
     var img = this.state.images[imageIndex]
     var imgName = img.name
-    this.syncImageTagsDB(img) // sync before deleting if necessary
+    this.syncImageTagsDB(img).then(this.getTags) // sync before deleting if necessary
 
     axios
       .delete(`${API_URL}/projects/${this.state.project_id}/images/${imgName}`)
@@ -481,12 +536,8 @@ class Project extends Component {
     this.setState({ project_id: null })
   }
 
-  showDeleteImageTagsDialog = () => {
-    this.setState({ showDeleteImageTagsDialog: true })
-  }
-
   render() {
-    const { images, currentImageIndex, tags } = this.state
+    const { images, currentImageIndex, tags, confirmDialog } = this.state
     const currentImage = images[currentImageIndex]
     const currentImageTags = currentImage ? currentImage.tags : []
 
@@ -495,6 +546,16 @@ class Project extends Component {
       <Redirect to="/" />
     ) : (
       <div className="Project">
+        <FileDrop frame={document} onDrop={this.onDrop}>
+          Drop images or JSON files here to import them to the project...
+        </FileDrop>
+        <DialogHelper
+          open={confirmDialog.visible}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={() => this.confirmDialogClose(true)}
+          onCancel={confirmDialog.alert ? null : () => this.confirmDialogClose(false)}
+        />
         <Header
           currentProjectName={this.state.projectName}
           onUploadImage={this.uploadImages}
@@ -553,18 +614,11 @@ class Project extends Component {
           <CardActions className="taglist-cardactions">
             <Button
               color="primary"
-              onClick={this.showDeleteImageTagsDialog}
+              onClick={this.confirmDeleteImageTags}
               disabled={!currentImageTags.length}
             >
               <ClearIcon />
             </Button>
-            <DialogHelper
-              open={this.state.showDeleteImageTagsDialog}
-              title="Delete all tags from this image?"
-              message="Are you sure that you want to delete all bounding boxes from this image? This can't be undone."
-              onConfirm={() => this.confirmDeleteImageTags(true)}
-              onCancel={() => this.confirmDeleteImageTags(false)}
-            />
           </CardActions>
         </Card>
       </div>
