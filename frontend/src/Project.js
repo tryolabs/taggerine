@@ -81,7 +81,7 @@ class Project extends Component {
 
   syncImageTagsDB = image => {
     if (lastTagChange <= lastTagSave) {
-      Promise.resolve()
+      return Promise.resolve()
     }
     lastTagSave = Date.now()
     var imgName = image.name
@@ -506,7 +506,7 @@ class Project extends Component {
   handleImageDelete = imageIndex => {
     var img = this.state.images[imageIndex]
     var imgName = img.name
-    this.syncImageTagsDB(img).then(this.getTags) // sync before deleting if necessary
+    this.syncImageTagsDB(img) // sync before deleting if necessary
 
     axios
       .delete(`${API_URL}/projects/${this.state.project_id}/images/${imgName}`)
