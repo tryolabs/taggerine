@@ -33,6 +33,8 @@ let lastTagSave = 0
 
 let syncTagsInterval = null
 
+let dragging = false
+
 class Project extends Component {
   state = {
     project_id: this.props.match.params.project_id,
@@ -135,7 +137,7 @@ class Project extends Component {
 
     // Periodically check sync with DB for current image Tags
     syncTagsInterval = setInterval(() => {
-      if (lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
+      if (!dragging && lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
         this.syncCurrentTagsDB().then(this.getTags)
       }
     }, 1000)
@@ -536,6 +538,8 @@ class Project extends Component {
     this.setState({ project_id: null })
   }
 
+  onDragging = isDragging => (dragging = isDragging)
+
   render() {
     const { images, currentImageIndex, tags, confirmDialog } = this.state
     const currentImage = images[currentImageIndex]
@@ -583,6 +587,7 @@ class Project extends Component {
                 {currentImage && (
                   <Tagger
                     image={currentImage}
+                    onDragging={this.onDragging}
                     onTagMove={this.updateTag}
                     width={width - 60}
                     height={height}

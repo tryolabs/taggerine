@@ -71,19 +71,19 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
   const bottomLeft = group.get(`.${ANCHOR_NAMES.bottomLeft}`)[0]
   const rect = group.get('Rect')[0]
 
-  const deltaX = activeAnchor.x()
-  const deltaY = activeAnchor.y()
+  const dragX = activeAnchor.x()
+  const dragY = activeAnchor.y()
   const anchorName = activeAnchor.name()
 
   let width
   if (anchorName === ANCHOR_NAMES.topLeft || anchorName === ANCHOR_NAMES.bottomLeft)
-    width = topRight.x() - deltaX
-  else width = deltaX
+    width = topRight.x() - dragX
+  else width = dragX
 
   let height
   if (anchorName === ANCHOR_NAMES.topLeft || anchorName === ANCHOR_NAMES.topRight)
-    height = bottomRight.y() - deltaY
-  else height = deltaY
+    height = bottomRight.y() - dragY
+  else height = dragY
 
   topRight.position({ x: width, y: 0 })
   bottomLeft.position({ x: 0, y: height })
@@ -96,14 +96,14 @@ const updateBoundingBox = (activeAnchor, onUpdate) => {
 
   switch (anchorName) {
     case ANCHOR_NAMES.topLeft:
-      x += deltaX
-      y += deltaY
+      x += dragX
+      y += dragY
       break
     case ANCHOR_NAMES.bottomLeft:
-      x += deltaX
+      x += dragX
       break
     case ANCHOR_NAMES.topRight:
-      y += deltaY
+      y += dragY
       break
     default:
       break
@@ -135,7 +135,8 @@ const createBoundingBox = (
     color = colors(id)
   },
   onDragMove,
-  onDragEnd
+  onDragEnd,
+  onDragging
 ) => {
   const group = new Konva.Group({ x, y, draggable: true, id, width, height })
 
@@ -180,15 +181,18 @@ const createBoundingBox = (
       layer.draw()
     })
     anchor.on('mousedown touchstart', function() {
+      onDragging(true)
       group.setDraggable(false)
       this.moveToTop()
     })
     anchor.on('dragend', function() {
+      onDragging(false)
       group.setDraggable(true)
     })
   })
 
   group.on('dragmove', function() {
+    onDragging(true)
     const layer = this.getLayer()
     if (group.x() < 0) {
       group.x(0)
@@ -205,6 +209,7 @@ const createBoundingBox = (
   })
 
   group.on('dragend', function() {
+    onDragging(false)
     onDragEnd({
       id,
       label: text,
