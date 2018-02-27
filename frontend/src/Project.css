@@ -21,7 +21,7 @@ body {overflow: hidden}
 
 #taglist-recentlist {
   grid-area: top-right-side-panel;
-  margin: 15px 5px 15px 5px;
+  margin: 5px 10px 12px 5px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -29,7 +29,7 @@ body {overflow: hidden}
 
 #taglist-imagetags {
   grid-area: tags;
-  margin: 5px 5px 15px 5px;
+  margin: 0px 10px 10px 5px;
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -37,7 +37,7 @@ body {overflow: hidden}
 
 #uploaded-list {
   grid-area: uploaded-list;
-  margin: 5px 5px 15px 5px;
+  margin: 5px 5px 10px 10px;
   overflow: auto;
 }
 
