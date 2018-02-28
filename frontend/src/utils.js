@@ -158,24 +158,33 @@ const createBoundingBox = (
   const topRight = createAnchor({ x: width, y: 0, name: ANCHOR_NAMES.topRight })
   const bottomRight = createAnchor({ x: width, y: height, name: ANCHOR_NAMES.bottomRight })
   const bottomLeft = createAnchor({ x: 0, y: height, name: ANCHOR_NAMES.bottomLeft })
-
   const anchors = [topLeft, topRight, bottomRight, bottomLeft]
+  const min_box_size = 10
+
   anchors.forEach(anchor => {
     group.add(anchor)
 
     anchor.on('dragmove', function() {
       const layer = this.getLayer()
-      if (anchor.x() < -group.x()) {
-        anchor.x(-group.x())
+      const name = anchor.name()
+
+      if (name === ANCHOR_NAMES.topRight || name === ANCHOR_NAMES.bottomRight) {
+        if (anchor.x() < min_box_size) anchor.x(min_box_size)
+        if (anchor.x() + group.x() > layer.width()) anchor.x(layer.width() - group.x())
       }
-      if (anchor.x() + group.x() > layer.width()) {
-        anchor.x(layer.width() - group.x())
+      if (name === ANCHOR_NAMES.topLeft || name === ANCHOR_NAMES.bottomLeft) {
+        if (anchor.x() > group.width() + min_box_size) anchor.x(group.width() + min_box_size)
+        // Check left border inside canvas: note that anchor x is relative to group x
+        if (anchor.x() < -group.x()) anchor.x(-group.x())
       }
-      if (anchor.y() < -group.y()) {
-        anchor.y(-group.y())
+      if (name === ANCHOR_NAMES.topRight || name === ANCHOR_NAMES.topLeft) {
+        if (anchor.y() > group.height() + min_box_size) anchor.y(group.height() + min_box_size)
+        // Check top border inside canvas: note that anchor y is relative to group y
+        if (anchor.y() < -group.y()) anchor.y(-group.y())
       }
-      if (anchor.y() + group.y() > layer.height()) {
-        anchor.y(layer.height() - group.y())
+      if (name === ANCHOR_NAMES.bottomRight || name === ANCHOR_NAMES.bottomLeft) {
+        if (anchor.y() < min_box_size) anchor.y(min_box_size)
+        if (anchor.y() + group.y() > layer.height()) anchor.y(layer.height() - group.y())
       }
       updateBoundingBox(this, onDragMove)
       layer.draw()
