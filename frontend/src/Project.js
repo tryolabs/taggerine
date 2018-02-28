@@ -21,11 +21,16 @@ import ClearIcon from 'material-ui-icons/Clear'
 import './Project.css'
 import './FileDrop.css'
 import Header from './Header'
+import KeyBindings from './KeyBindings'
 
 const PRECISION_ERROR = '0.000001'
 const API_URL = process.env.REACT_APP_API_URL
 
 let tagId = 0
+
+let lastTagPos = {}
+
+let lastTagLabel = ''
 
 let lastTagChange = 0
 
@@ -43,7 +48,6 @@ class Project extends Component {
     totalImages: 0,
     tags: [],
     currentImageIndex: 0,
-    lastTagPos: {},
     tagFormat: 'xywh',
     confirmDialog: {
       visible: false,
@@ -141,6 +145,9 @@ class Project extends Component {
         this.syncCurrentTagsDB().then(this.getTags)
       }
     }, 1000)
+
+    document.onkeydown = e =>
+      KeyBindings(e, this.nextImage, this.prevImage, this.addTag, this.repeatLastTag)
   }
 
   componentWillUnmount() {
@@ -371,12 +378,13 @@ class Project extends Component {
     saveAs(content, `tags_${this.state.projectName}.json`, 'application/json;charset=utf-8')
   }
 
-  addTag = () => {
-    this.repeatTag(`tag${tagId}`)
-  }
+  addTag = () => this.repeatTag()
+
+  repeatLastTag = () => this.repeatTag(lastTagLabel)
 
   repeatTag = label => {
-    let lastTagPos = this.state.lastTagPos
+    if (!label) label = `tag${tagId}`
+
     var x, y, width, height
 
     // Is there a previous bbox with this label?
@@ -392,13 +400,14 @@ class Project extends Component {
     }
     const newTag = { x, y, width, height, label: label, id: ++tagId }
     lastTagPos[label] = newTag
+    lastTagLabel = label
 
     const images = [...this.state.images]
     const newImage = images[this.state.currentImageIndex]
     images[this.state.currentImageIndex] = { ...newImage, tags: [...newImage.tags, newTag] }
 
     this.tagsChanged()
-    this.setState({ images, lastTagPos })
+    this.setState({ images })
   }
 
   updateTag = tag => {
@@ -410,11 +419,11 @@ class Project extends Component {
     const newImages = [...images]
     newImages[currentImageIndex].tags = imageTags
 
-    const lastTagPos = this.state.lastTagPos
     lastTagPos[tag.label] = tag
+    lastTagLabel = tag.label
 
     this.tagsChanged()
-    this.setState({ images: newImages, lastTagPos })
+    this.setState({ images: newImages })
   }
 
   updateTagLabel = (tagIdx, label) => {
@@ -429,11 +438,10 @@ class Project extends Component {
     newImages[currentImageIndex] = newImage
 
     // Update information of last block for the new label
-    const lastTagPos = this.state.lastTagPos
     lastTagPos[label] = newTag
 
     this.tagsChanged()
-    this.setState({ images: newImages, lastTagPos })
+    this.setState({ images: newImages })
   }
 
   removeTag = id => {
