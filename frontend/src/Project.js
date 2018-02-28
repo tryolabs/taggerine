@@ -33,6 +33,8 @@ let lastTagSave = 0
 
 let syncTagsInterval = null
 
+let dragging = false
+
 class Project extends Component {
   state = {
     project_id: this.props.match.params.project_id,
@@ -81,7 +83,7 @@ class Project extends Component {
 
   syncImageTagsDB = image => {
     if (lastTagChange <= lastTagSave) {
-      Promise.resolve()
+      return Promise.resolve()
     }
     lastTagSave = Date.now()
     var imgName = image.name
@@ -135,7 +137,7 @@ class Project extends Component {
 
     // Periodically check sync with DB for current image Tags
     syncTagsInterval = setInterval(() => {
-      if (lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
+      if (!dragging && lastTagChange > lastTagSave && Date.now() - lastTagChange > 2000) {
         this.syncCurrentTagsDB().then(this.getTags)
       }
     }, 1000)
@@ -506,7 +508,7 @@ class Project extends Component {
   handleImageDelete = imageIndex => {
     var img = this.state.images[imageIndex]
     var imgName = img.name
-    this.syncImageTagsDB(img).then(this.getTags) // sync before deleting if necessary
+    this.syncImageTagsDB(img) // sync before deleting if necessary
 
     axios
       .delete(`${API_URL}/projects/${this.state.project_id}/images/${imgName}`)
@@ -535,6 +537,8 @@ class Project extends Component {
     window.localStorage.removeItem('project_id')
     this.setState({ project_id: null })
   }
+
+  onDragging = isDragging => (dragging = isDragging)
 
   render() {
     const { images, currentImageIndex, tags, confirmDialog } = this.state
@@ -583,6 +587,7 @@ class Project extends Component {
                 {currentImage && (
                   <Tagger
                     image={currentImage}
+                    onDragging={this.onDragging}
                     onTagMove={this.updateTag}
                     width={width - 60}
                     height={height}

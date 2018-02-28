@@ -20,7 +20,12 @@ class Tagger extends React.Component {
         text: label,
         id
       }
-      const boundingBox = createBoundingBox(boxAttr, this.rearrengeBoundingBoxes, this.boxDragEnd)
+      const boundingBox = createBoundingBox(
+        boxAttr,
+        this.rearrengeBoundingBoxes,
+        this.boxDragEnd,
+        this.props.onDragging
+      )
       this._layer.add(boundingBox)
       this._boundingBoxes[id] = boundingBox
     })
@@ -113,6 +118,7 @@ class Tagger extends React.Component {
 }
 
 Tagger.propTypes = {
+  onDragging: PropTypes.func,
   onTagMove: PropTypes.func,
   image: PropTypes.object,
   width: PropTypes.number,
