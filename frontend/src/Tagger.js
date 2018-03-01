@@ -8,7 +8,11 @@ import './Tagger.css'
 
 class Tagger extends React.Component {
   addBoundingBoxes = () => {
-    Object.values(this._boundingBoxes).forEach(boundingBox => boundingBox.remove())
+    Object.values(this._boundingBoxes).forEach(boundingBox => {
+      boundingBox.setDraggable(false)
+      boundingBox.getChildren(element => element.setDraggable(false))
+      boundingBox.remove()
+    })
     this._boundingBoxes = {}
 
     this.props.image.tags.forEach(({ x, y, width, height, label, id }) => {
