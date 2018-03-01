@@ -509,7 +509,7 @@ class Project extends Component {
 
   handleImageSelection = currentImageIndex => {
     // sync before changing image if necessary
-    this.syncCurrentTagsDB().then(this.getTags())
+    this.syncCurrentTagsDB().then(this.getTags)
     this.setState({ currentImageIndex })
   }
 
