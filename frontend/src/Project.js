@@ -21,7 +21,7 @@ import ClearIcon from 'material-ui-icons/Clear'
 import './Project.css'
 import './FileDrop.css'
 import Header from './Header'
-import KeyBindings from './KeyBindings'
+import InitKeyBindings from './KeyBindings'
 
 const PRECISION_ERROR = '0.000001'
 const API_URL = process.env.REACT_APP_API_URL
@@ -146,8 +146,7 @@ class Project extends Component {
       }
     }, 1000)
 
-    document.onkeydown = e =>
-      KeyBindings(e, this.nextImage, this.prevImage, this.addTag, this.repeatLastTag)
+    InitKeyBindings(this.nextImage, this.prevImage, this.addTag, this.repeatLastTag)
   }
 
   componentWillUnmount() {
@@ -426,7 +425,8 @@ class Project extends Component {
     this.setState({ images: newImages })
   }
 
-  updateTagLabel = (tagIdx, label) => {
+  updateTagLabel = (evt, tagIdx) => {
+    const label = evt.target.value
     const { images, currentImageIndex } = this.state
     const image = images[currentImageIndex]
 
