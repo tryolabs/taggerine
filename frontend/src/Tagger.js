@@ -60,7 +60,7 @@ class Tagger extends React.Component {
   }
 
   addImage() {
-    if (Boolean(this._image)) this._image.destroy()
+    if (this._image) this._image.destroy()
 
     Konva.Image.fromURL(this.props.image.url, konvaImage => {
       const height = konvaImage.height()
@@ -109,7 +109,7 @@ class Tagger extends React.Component {
       Boolean(this._image)
     ) {
       this.addImage()
-    } else if (Boolean(this._image)) this.addBoundingBoxes()
+    } else if (this._image) this.addBoundingBoxes()
   }
 
   render() {

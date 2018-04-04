@@ -103,7 +103,7 @@ class Header extends React.Component {
   closeDialog = () => this.setState({ dialogType: DialogType.None })
 
   handleUploadImages = files => {
-    if (Boolean(files)) this.props.onUploadImage(files)
+    if (files) this.props.onUploadImage(files)
     this.closeDialog()
   }
 

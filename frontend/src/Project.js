@@ -346,7 +346,7 @@ class Project extends Component {
       const uploadedTags = JSON.parse(e.target.result)
       const images = this.state.images.map(image => {
         const newTags = uploadedTags[image.name]
-        if (Boolean(newTags)) {
+        if (newTags) {
           const result = { ...image, tags: this._mergeTags(newTags, image.tags) }
           return result
         } else return image
@@ -389,7 +389,7 @@ class Project extends Component {
     // Is there a previous bbox with this label?
     if (lastTagPos[label]) {
       // If a bbox with the same label exists, place new bbox next to it
-      ;({ x, y, width, height } = this._calculateNextBBox(lastTagPos[label]))
+      ({ x, y, width, height } = this._calculateNextBBox(lastTagPos[label]))
     } else {
       // First bbox with this label: place it in top left corner, with default w/h configured
       x = 0
