@@ -28,8 +28,8 @@ const DialogType = Object.freeze({
 
 const UploadImages = ({ visibleDialog, showDialog, onClose }) => (
   <div>
-    <Button color="inherit" onClick={showDialog(DialogType.UploadImage)}>
-      <UploadIcon color="primary" />
+    <Button color="inherit" onClick={showDialog(DialogType.UploadImage)} title="Upload Images">
+      <UploadIcon color="primary"/>
     </Button>
     <UploadImagesDialog open={visibleDialog === DialogType.UploadImage} onDismiss={onClose} />
   </div>
@@ -37,7 +37,7 @@ const UploadImages = ({ visibleDialog, showDialog, onClose }) => (
 
 const ImportExport = ({ visibleDialog, showDialog, onClose }) => (
   <div>
-    <Button color="inherit" onClick={showDialog(DialogType.ImportExport)}>
+    <Button color="inherit" onClick={showDialog(DialogType.ImportExport)} title="Import/Export">
       <ImportExportIcon color="primary" />
     </Button>
     <ImportExportDialog open={visibleDialog === DialogType.ImportExport} onDismiss={onClose} />
@@ -46,7 +46,7 @@ const ImportExport = ({ visibleDialog, showDialog, onClose }) => (
 
 const Delete = ({ visibleDialog, showDialog, onClose }) => (
   <div>
-    <Button color="inherit" onClick={showDialog(DialogType.Delete)}>
+    <Button color="inherit" onClick={showDialog(DialogType.Delete)} title="Delete all tags">
       <DeleteIcon color="primary" />
     </Button>
     <DialogHelper
@@ -61,7 +61,7 @@ const Delete = ({ visibleDialog, showDialog, onClose }) => (
 
 const Settings = ({ visibleDialog, showDialog, onClose, onSettingsChange, settings }) => (
   <div>
-    <Button color="inherit" onClick={showDialog(DialogType.Settings)}>
+    <Button color="inherit" onClick={showDialog(DialogType.Settings)} title="Settings">
       <SettingsIcon color="primary" />
     </Button>
     <ProjectSettingsDialog
@@ -163,7 +163,7 @@ class Header extends React.Component {
               onClose={_ => this.closeDialog()}
             />
             <div>
-              <Button color="inherit" onClick={this.props.onExit}>
+              <Button color="inherit" onClick={this.props.onExit} title="Exit">
                 <ExitToAppIcon color="primary" />
               </Button>
             </div>
