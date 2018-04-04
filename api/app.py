@@ -35,7 +35,6 @@ def configure_db(app):
     """
     @app.teardown_appcontext
     def shutdown_session(response_or_exc):
-        db.remove()
         return response_or_exc
 
 

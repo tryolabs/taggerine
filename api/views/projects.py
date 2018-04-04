@@ -1,10 +1,9 @@
-import os, shutil
+import os
+import shutil
 from flask import Blueprint, jsonify, request, send_file
-from flask_apispec import marshal_with, use_kwargs
 from PIL import Image as PilImage, ImageOps
 
 from ..models import db, Project, Image, Tag
-from ..serializers import ProjectSchema
 
 DEFAULT_THUMBNAIL_SIZE = (120, 120)
 UPLOAD_FOLDER = '/upload'
@@ -194,6 +193,6 @@ def update_image_tags(project_id, imagename):
         image.tags = new_tags
         db.commit()
         return jsonify(status='ok')
-    except:
+    except Exception:
         db.rollback()
         return jsonify(status='error')

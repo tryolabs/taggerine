@@ -1,0 +1,17 @@
+matrix:
+  include:
+    - language: python
+      python: "3.6"
+      install:
+        - pip install flake8
+      script:
+        - flake8 --max-line-length 99 api
+
+    - language: node_js
+      node_js: 7
+      install:
+        - cd frontend
+        - npm install
+        - npm install eslint babel-eslint
+      script:
+        - ./node_modules/.bin/eslint src/*.js

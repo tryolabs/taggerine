@@ -1,3 +1,9 @@
 {
-  "extends": "react-app"
+  "extends": [
+    "react-app",
+    "eslint:recommended"
+  ],
+  "rules": {
+        "no-console": "off"
+    }
 }
