@@ -1,6 +1,6 @@
 ![Taggerine Logo](https://user-images.githubusercontent.com/653497/38255301-dc0d3156-3731-11e8-81ff-5e802d7928ec.png)
 ========
-
+[![Build Status](https://travis-ci.org/tryolabs/taggerine.svg?branch=master)](https://travis-ci.org/tryolabs/taggerine)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 Taggerine 🍊 is an open-source tagger/annotation tool for images.
