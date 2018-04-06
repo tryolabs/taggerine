@@ -69,7 +69,13 @@ body {overflow: hidden}
 }
 
 .taglist-row-label{
-  width: 80%;
+  width: 70%;
+}
+
+.taglist-color-label{
+  width: 10%;
+  margin-right: 10px;
+  opacity: 0.7;
 }
 
 .title {

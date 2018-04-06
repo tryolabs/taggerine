@@ -6,12 +6,20 @@ import List, { ListItem, ListItemSecondaryAction } from 'material-ui/List'
 import Typography from 'material-ui/Typography'
 import CancelIcon from 'material-ui-icons/Cancel'
 import RefreshIcon from 'material-ui-icons/Refresh'
+import { colors } from './utils'
 
 const ImageTagList = ({ imageTags, onTagLabelChange, onRepeatTag, onRemoveTag }) =>
   imageTags.length ? (
     <List>
       {imageTags.map((imageTag, index) => (
         <ListItem divider={true} dense={true} key={index}>
+          <Input
+            disableUnderline={true}
+            className="taglist-color-label"
+            type="color"
+            value={colors(imageTag.id)}
+            disabled
+          />
           <Input
             disableUnderline={true}
             className="taglist-row-label"
