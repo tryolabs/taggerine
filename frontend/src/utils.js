@@ -236,4 +236,4 @@ const createBoundingBox = (
   return group
 }
 
-export { createBoundingBox }
+export { createBoundingBox, colors }
