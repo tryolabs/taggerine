@@ -17,3 +17,5 @@ COPY frontend /src/app
 
 # defined in package.json
 CMD [ "yarn", "start"]
+
+EXPOSE 3000

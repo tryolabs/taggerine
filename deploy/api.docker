@@ -19,3 +19,5 @@ COPY api /api
 RUN pip install -r api/requirements.txt
 
 CMD uwsgi --ini /api/api.ini
+
+EXPOSE 5000
