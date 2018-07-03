@@ -11,7 +11,7 @@ RUN apt-get update && \
 # Make sure we use latest pip.
 RUN pip install --upgrade pip
 
-RUN mkdir -p /upload
+VOLUME /upload
 
 COPY api /api
 

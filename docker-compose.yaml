@@ -2,6 +2,7 @@ version: "2.1"
 
 volumes:
   database:
+  upload:
 
 services:
 
@@ -16,6 +17,7 @@ services:
             condition: service_healthy
     volumes:
       - ./api:/api
+      - upload:/upload
     env_file:
       - deploy/api.env
 
